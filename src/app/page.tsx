@@ -218,14 +218,10 @@ export default function Home() {
         if (item.imageUrl) {
             try {
                 let imageDataUri = item.imageUrl;
-                // If it's a web URL, fetch it through the server action to avoid CORS issues.
                 if (item.imageUrl.startsWith('http')) {
                     imageDataUri = await getImageAsDataUri(item.imageUrl);
                 }
-                
-                // Now we assume imageDataUri is a valid data URI (either from source or fetched)
-                imageCell = { image: imageDataUri, width: 20, height: 20 };
-
+                imageCell = { image: imageDataUri, width: 20 };
             } catch (e) {
                 console.error("Could not load image for PDF", e);
             }
@@ -242,37 +238,72 @@ export default function Home() {
     }));
 
     doc.autoTable({
-        startY: 75,
-        head: [tableColumn],
-        body: tableRows,
-        theme: 'striped',
-        headStyles: { fillColor: [75, 85, 99] }, // gray-600
-        styles: { fontSize: 8, valign: 'middle' },
-        columnStyles: {
-            1: { cellWidth: 22 }, // Image column
-        },
-        didDrawCell: (data) => {
-            if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-                try {
-                    const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                    doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
-                } catch(e) {
-                    console.error("Failed to add image to PDF:", e);
-                    // Draw a placeholder box if image adding fails
-                    doc.rect(data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
-                    doc.text("X", data.cell.x + data.cell.raw.width / 2, data.cell.y + data.cell.raw.height / 2, { align: 'center', baseline: 'middle' });
-                }
-            }
+      startY: 75,
+      head: [tableColumn],
+      body: tableRows,
+      theme: 'striped',
+      headStyles: { fillColor: [75, 85, 99] }, // gray-600
+      styles: { fontSize: 8, valign: 'middle' },
+      columnStyles: {
+          1: { cellWidth: 22, minCellHeight: 22 }, // Image column
+      },
+      didDrawCell: (data) => {
+          if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+              try {
+                  const img = new (window as any).Image();
+                  img.src = data.cell.raw.image;
+                  
+                  const cellWidth = data.cell.width - 4; // padding
+                  const cellHeight = data.cell.height - 4; // padding
+                  
+                  const aspect = img.width / img.height;
+                  let imgWidth = cellWidth;
+                  let imgHeight = imgWidth / aspect;
+
+                  if (imgHeight > cellHeight) {
+                      imgHeight = cellHeight;
+                      imgWidth = imgHeight * aspect;
+                  }
+
+                  const x = data.cell.x + (cellWidth - imgWidth) / 2 + 2;
+                  const y = data.cell.y + (cellHeight - imgHeight) / 2 + 2;
+
+                  const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                  doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
+              
+              } catch(e) {
+                  console.error("Failed to add image to PDF:", e);
+                  const x = data.cell.x + 2;
+                  const y = data.cell.y + 2;
+                  doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
+                  doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
+              }
+          }
+      },
+      willDrawCell: (data) => {
+        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+          try {
+            const img = new (window as any).Image();
+            img.src = data.cell.raw.image;
+            const aspectRatio = img.width / img.height;
+            const imageWidth = data.cell.width - 4; // padding
+            const imageHeight = imageWidth / aspectRatio;
+            // Set the row height based on the image's aspect ratio
+            data.row.height = Math.max(data.row.height, imageHeight + 4);
+          } catch(e) {
+            console.error("Failed to calculate image height:", e);
+          }
         }
+      },
     });
 
     // Add Totals
-    const finalY = doc.autoTable.previous.finalY;
+    const finalY = (doc as any).autoTable.previous.finalY;
     doc.setFontSize(10);
     doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, 14, finalY + 10);
     doc.text(`VAT (${vatRate * 100}%): ${vatAmount.toFixed(2)}`, 14, finalY + 16);
     doc.setFontSize(12);
-    doc.setFont('bold');
+    doc.setFont('bold' as any);
     doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 14, finalY + 22);
 
     doc.save(fileName);
@@ -421,7 +452,7 @@ export default function Home() {
                                 <TableRow key={`boq-item-${itemIndex}`}>
                                     <TableCell>
                                         {item.imageUrl ? (
-                                            <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md" />
+                                            <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md object-cover" />
                                         ) : (
                                             <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                                                 <ImageIcon className="w-5 h-5 text-muted-foreground" />
@@ -515,7 +546,7 @@ export default function Home() {
                                   <TableRow key={`final-boq-item-${itemIndex}`}>
                                       <TableCell>
                                           {item.imageUrl ? (
-                                              <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md" />
+                                              <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md object-cover" />
                                           ) : (
                                               <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                                                   <ImageIcon className="w-5 h-5 text-muted-foreground" />
