@@ -62,13 +62,11 @@ const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
-  prompt: `You are an expert data extraction agent. Your task is to analyze the provided document and extract all structured information with high accuracy.
+  prompt: `You are an expert data extraction agent. Your task is to analyze the provided document and extract all structured information with absolute precision.
 
 Analyze the document provided via the data URI and extract the following information:
-1.  **Tables**: Identify all tables. For each table, extract all column headers and every single corresponding row with perfect accuracy. Ensure the table format is preserved and the data is organized cleanly. Do not skip any data.
-2.  **Lists**: Identify all bulleted or numbered lists. For each list, extract its title (if available) and all items.
-3.  **Prices**: Identify all monetary values mentioned in the document. Extract them exactly as they appear, including currency symbols.
-4.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. Extract all items from each BOQ you find. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit.
+1.  **Tables**: Identify all tables. For each table, extract all column headers and every single corresponding row. Do not skip any data.
+2.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. It is CRITICAL that you extract EVERY SINGLE item from each BOQ you find. DO NOT skip any line items. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit. The accuracy of the final total depends on you extracting every item.
 
 Return the extracted data in the specified JSON format.
 
