@@ -16,6 +16,8 @@ export default function Home() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showFinalBoq, setShowFinalBoq] = useState(false);
 
   const [netMargin, setNetMargin] = useState(0);
   const [freight, setFreight] = useState(0);
@@ -29,6 +31,7 @@ export default function Home() {
       setFile(selectedFile);
       setError(null);
       setExtractedData(null);
+      setShowFinalBoq(false);
     }
   };
 
@@ -41,6 +44,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setExtractedData(null);
+    setShowFinalBoq(false);
 
     try {
       const reader = new FileReader();
@@ -173,6 +177,47 @@ export default function Home() {
             ))}
             
             {allBoqItems.length > 0 && (
+              <Card>
+                <CardHeader>
+                   <CardTitle>Original Bill of Quantities</CardTitle>
+                   {extractedData.boqs?.[0]?.description && <CardDescription>{extractedData.boqs?.[0].description}</CardDescription>}
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
+                                <TableHead>Unit</TableHead>
+                                <TableHead className="text-right">Rate</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {allBoqItems.map((item, itemIndex) => (
+                                <TableRow key={`boq-item-${itemIndex}`}>
+                                    <TableCell>{item.itemCode}</TableCell>
+                                    <TableCell>{item.description}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell>{item.unit}</TableCell>
+                                    <TableCell className="text-right">{item.rate?.toFixed(2) || '-'}</TableCell>
+                                    <TableCell className="text-right">{item.amount?.toFixed(2) || '-'}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+                 <CardFooter className="flex flex-col items-end gap-2 p-6">
+                    <div className="flex justify-between w-full max-w-xs font-bold text-lg border-t pt-2 mt-2">
+                        <span>Subtotal</span>
+                        <span>{subtotal.toFixed(2)}</span>
+                    </div>
+                </CardFooter>
+              </Card>
+            )}
+
+            {allBoqItems.length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Cost &amp; Margin Preferences</CardTitle>
@@ -208,14 +253,17 @@ export default function Home() {
                             <Slider id="installation" value={[installation]} onValueChange={([v]) => setInstallation(v)} max={100} step={1} />
                         </div>
                     </CardContent>
+                    <CardFooter className="justify-end">
+                        <Button onClick={() => setShowFinalBoq(true)}>Generate New BOQ</Button>
+                    </CardFooter>
                 </Card>
             )}
 
-            {allBoqItems.length > 0 && (
+            {showFinalBoq && allBoqItems.length > 0 && (
               <Card>
                 <CardHeader>
-                   <CardTitle>Bill of Quantities</CardTitle>
-                   {extractedData.boqs?.[0]?.description && <CardDescription>{extractedData.boqs?.[0].description}</CardDescription>}
+                   <CardTitle>Final Bill of Quantities</CardTitle>
+                   <CardDescription>This BOQ includes the additional costs and margins you specified.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -231,7 +279,7 @@ export default function Home() {
                         </TableHeader>
                         <TableBody>
                             {allBoqItems.map((item, itemIndex) => (
-                                <TableRow key={`boq-item-${itemIndex}`}>
+                                <TableRow key={`final-boq-item-${itemIndex}`}>
                                     <TableCell>{item.itemCode}</TableCell>
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
@@ -275,7 +323,6 @@ export default function Home() {
                 </CardFooter>
               </Card>
             )}
-
           </div>
         )}
       </div>
