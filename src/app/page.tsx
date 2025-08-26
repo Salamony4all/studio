@@ -95,7 +95,11 @@ export default function Home() {
                 )}
               </Button>
             </div>
-            {isLoading && <Progress value={undefined} className="w-full mt-4" />}
+            {isLoading && (
+              <div className="mt-4 w-full">
+                <Progress value={undefined} />
+              </div>
+            )}
              {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
           </CardContent>
         </Card>
