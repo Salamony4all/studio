@@ -12,7 +12,6 @@ import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Download, Loader2, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { alshayaLogo } from '@/lib/logo';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -164,13 +163,10 @@ export default function Home() {
   const handleExportPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
-
-    // Add Logo
-    doc.addImage(alshayaLogo, 'PNG', 14, 10, 50, 20);
     
     // Add Header
-    doc.setFontSize(10);
-    doc.text('Alshaya Enterprises (Alshaya United LLC)', 70, 20);
+    doc.setFontSize(20);
+    doc.text('Alshaya Enterprises', 14, 20);
 
     // Add Project Details
     doc.setFontSize(16);
@@ -482,5 +478,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
