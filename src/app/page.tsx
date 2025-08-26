@@ -10,7 +10,6 @@ import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import Image from 'next/image';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -161,7 +160,6 @@ export default function Home() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Image</TableHead>
                                 <TableHead>Item</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead className="text-right">Quantity</TableHead>
@@ -173,21 +171,6 @@ export default function Home() {
                         <TableBody>
                             {boq.items.map((item, itemIndex) => (
                                 <TableRow key={`boq-item-${boqIndex}-${itemIndex}`}>
-                                    <TableCell>
-                                      {item.image ? (
-                                        <Image
-                                          src={item.image}
-                                          alt={item.description}
-                                          width={64}
-                                          height={64}
-                                          className="object-cover rounded-md"
-                                        />
-                                      ) : (
-                                        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground">
-                                          No Image
-                                        </div>
-                                      )}
-                                    </TableCell>
                                     <TableCell>{item.itemCode}</TableCell>
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>

@@ -1,14 +1,13 @@
 'use server';
 /**
- * @fileOverview A flow for extracting structured data from a document and generating images for BOQ items.
+ * @fileOverview A flow for extracting structured data from a document.
  * 
- * - extractDataFromFile: A function that handles the data extraction and image generation process.
+ * - extractDataFromFile: A function that handles the data extraction process.
  * - ExtractDataInput: The input type for the extractDataFromFile function.
  * - ExtractedData: The return type for the extractDataFromFile function.
  */
 
 import { ai } from '@/ai/genkit';
-import { generate } from 'genkit';
 import { z } from 'zod';
 
 const ExtractDataInputSchema = z.object({
@@ -72,7 +71,7 @@ Analyze the document provided via the data URI and extract the following informa
 3.  **Prices**: Identify all monetary values mentioned in the document. Extract them exactly as they appear, including currency symbols.
 4.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. Extract all items from each BOQ you find. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit.
 
-Return the extracted data in the specified JSON format. Ensure all data is included and accurately represented. Do not generate images yet.
+Return the extracted data in the specified JSON format.
 
 Document: {{media url=fileDataUri}}`,
 });
@@ -91,36 +90,6 @@ const extractDataFlow = ai.defineFlow(
         throw new Error("Failed to extract data from the document.");
     }
     
-    if (!extractedData.boqs || extractedData.boqs.length === 0) {
-      return extractedData;
-    }
-
-    const updatedBoqs = await Promise.all(
-      extractedData.boqs.map(async (boq) => {
-        const updatedItems = await Promise.all(
-          boq.items.map(async (item) => {
-            try {
-              const { media } = await generate({
-                model: 'googleai/imagen-4.0-fast-generate-001',
-                prompt: `Generate a photorealistic image of the following construction or building item: ${item.description}`,
-                config: {
-                  aspectRatio: "1:1",
-                }
-              });
-              return { ...item, image: media.url };
-            } catch (e) {
-              console.error(`Failed to generate image for item: ${item.description}`, e);
-              return item;
-            }
-          })
-        );
-        return { ...boq, items: updatedItems };
-      })
-    );
-
-    return {
-      ...extractedData,
-      boqs: updatedBoqs,
-    };
+    return extractedData;
   }
 );
