@@ -1,14 +1,15 @@
 'use server';
 /**
- * @fileOverview A flow for extracting structured data from a document.
+ * @fileOverview A flow for extracting structured data from a document and generating images for BOQ items.
  * 
- * - extractDataFromFile: A function that handles the data extraction process.
+ * - extractDataFromFile: A function that handles the data extraction and image generation process.
  * - ExtractDataInput: The input type for the extractDataFromFile function.
  * - ExtractedData: The return type for the extractDataFromFile function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { generate } from 'genkit';
 
 const ExtractDataInputSchema = z.object({
   fileDataUri: z
@@ -37,6 +38,7 @@ const BOQItemSchema = z.object({
     unit: z.string().describe('The unit of measurement (e.g., sqm, nos, kg).'),
     rate: z.number().optional().describe('The rate per unit.'),
     amount: z.number().optional().describe('The total amount for the item (quantity * rate).'),
+    image: z.string().optional().describe('A data URI of a generated image representing the item.')
 });
 
 const BOQSchema = z.object({
@@ -58,7 +60,7 @@ export async function extractDataFromFile(input: ExtractDataInput): Promise<Extr
   return extractDataFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
@@ -70,7 +72,7 @@ Analyze the document provided via the data URI and extract the following informa
 3.  **Prices**: Identify all monetary values mentioned in the document. Extract them exactly as they appear, including currency symbols.
 4.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. Extract all items from each BOQ you find. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit.
 
-Return the extracted data in the specified JSON format. Ensure all data is included and accurately represented.
+Return the extracted data in the specified JSON format. Ensure all data is included and accurately represented. Do not generate images yet.
 
 Document: {{media url=fileDataUri}}`,
 });
@@ -82,7 +84,41 @@ const extractDataFlow = ai.defineFlow(
     outputSchema: ExtractedDataSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    // First, extract all the data from the document.
+    const { output: extractedData } = await extractDataPrompt(input);
+
+    if (!extractedData || !extractedData.boqs) {
+      return extractedData!;
+    }
+
+    // Now, for each BOQ item, generate an image in parallel.
+    const updatedBoqs = await Promise.all(
+      extractedData.boqs.map(async (boq) => {
+        const updatedItems = await Promise.all(
+          boq.items.map(async (item) => {
+            try {
+              const { media } = await generate({
+                model: 'googleai/imagen-4.0-fast-generate-001',
+                prompt: `Generate a photorealistic image of the following construction or building item: ${item.description}`,
+                config: {
+                  aspectRatio: "1:1",
+                }
+              });
+              return { ...item, image: media.url };
+            } catch (e) {
+              console.error(`Failed to generate image for item: ${item.description}`, e);
+              // If image generation fails, just return the item without an image.
+              return item;
+            }
+          })
+        );
+        return { ...boq, items: updatedItems };
+      })
+    );
+
+    return {
+      ...extractedData,
+      boqs: updatedBoqs,
+    };
   }
 );
