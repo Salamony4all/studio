@@ -170,7 +170,7 @@ export default function Home() {
     
     // Add Header
     doc.setFontSize(10);
-    doc.text('Alshaya Enterprises (Alshaya United LLC) الشايع المتحدة ش.م.م', 70, 20);
+    doc.text('Alshaya Enterprises (Alshaya United LLC)', 70, 20);
 
     // Add Project Details
     doc.setFontSize(16);
@@ -482,3 +482,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
