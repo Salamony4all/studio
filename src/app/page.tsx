@@ -217,17 +217,23 @@ export default function Home() {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
             try {
-                const response = await fetch(item.imageUrl);
-                const blob = await response.blob();
-                const reader = new FileReader();
-                await new Promise<void>((resolve, reject) => {
-                    reader.onload = () => {
-                        imageCell = { image: reader.result as string, width: 20, height: 20 };
-                        resolve();
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                });
+                // Check if the imageUrl is a data URI
+                if (item.imageUrl.startsWith('data:image')) {
+                    imageCell = { image: item.imageUrl, width: 20, height: 20 };
+                } else {
+                    // Otherwise, fetch the image from the URL
+                    const response = await fetch(item.imageUrl);
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    await new Promise<void>((resolve, reject) => {
+                        reader.onload = () => {
+                            imageCell = { image: reader.result as string, width: 20, height: 20 };
+                            resolve();
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
             } catch (e) {
                 console.error("Could not load image for PDF", e);
             }
@@ -255,7 +261,8 @@ export default function Home() {
         },
         didDrawCell: (data) => {
             if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-                doc.addImage(data.cell.raw.image, 'JPEG', data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
+                const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
             }
         }
     });
@@ -566,3 +573,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
