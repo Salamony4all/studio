@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
@@ -14,6 +16,12 @@ export default function Home() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [netMargin, setNetMargin] = useState(0);
+  const [freight, setFreight] = useState(0);
+  const [customs, setCustoms] = useState(0);
+  const [installation, setInstallation] = useState(0);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -66,9 +74,17 @@ export default function Home() {
 
   const allBoqItems = extractedData?.boqs?.flatMap(boq => boq.items) || [];
   const subtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
+  
+  const netMarginAmount = subtotal * (netMargin / 100);
+  const freightAmount = subtotal * (freight / 100);
+  const customsAmount = subtotal * (customs / 100);
+  const installationAmount = subtotal * (installation / 100);
+
+  const totalBeforeVat = subtotal + netMarginAmount + freightAmount + customsAmount + installationAmount;
+  
   const vatRate = 0.15; // 15% VAT
-  const vatAmount = subtotal * vatRate;
-  const grandTotal = subtotal + vatAmount;
+  const vatAmount = totalBeforeVat * vatRate;
+  const grandTotal = totalBeforeVat + vatAmount;
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
@@ -155,6 +171,45 @@ export default function Home() {
                 </CardContent>
               </Card>
             ))}
+            
+            {allBoqItems.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Cost &amp; Margin Preferences</CardTitle>
+                        <CardDescription>Adjust the sliders to set your preferences for additional costs and margins.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid sm:grid-cols-2 gap-6">
+                         <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="net-margin">Net Margin</Label>
+                                <span className="text-sm font-medium">{netMargin}%</span>
+                            </div>
+                            <Slider id="net-margin" value={[netMargin]} onValueChange={([v]) => setNetMargin(v)} max={100} step={1} />
+                        </div>
+                         <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="freight">Freight</Label>
+                                <span className="text-sm font-medium">{freight}%</span>
+                            </div>
+                            <Slider id="freight" value={[freight]} onValueChange={([v]) => setFreight(v)} max={100} step={1} />
+                        </div>
+                         <div className="space-y-2">
+                             <div className="flex justify-between items-center">
+                                <Label htmlFor="customs">Custom Clearances</Label>
+                                <span className="text-sm font-medium">{customs}%</span>
+                             </div>
+                            <Slider id="customs" value={[customs]} onValueChange={([v]) => setCustoms(v)} max={100} step={1} />
+                        </div>
+                         <div className="space-y-2">
+                             <div className="flex justify-between items-center">
+                                <Label htmlFor="installation">Installation</Label>
+                                <span className="text-sm font-medium">{installation}%</span>
+                            </div>
+                            <Slider id="installation" value={[installation]} onValueChange={([v]) => setInstallation(v)} max={100} step={1} />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {allBoqItems.length > 0 && (
               <Card>
@@ -181,8 +236,8 @@ export default function Home() {
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
                                     <TableCell>{item.unit}</TableCell>
-                                    <TableCell className="text-right">{item.rate?.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">{item.amount?.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">{item.rate?.toFixed(2) || '-'}</TableCell>
+                                    <TableCell className="text-right">{item.amount?.toFixed(2) || '-'}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -194,10 +249,26 @@ export default function Home() {
                         <span className="font-medium">{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">VAT (15%)</span>
+                        <span className="text-muted-foreground">Net Margin ({netMargin}%)</span>
+                        <span className="font-medium">{netMarginAmount.toFixed(2)}</span>
+                    </div>
+                     <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">Freight ({freight}%)</span>
+                        <span className="font-medium">{freightAmount.toFixed(2)}</span>
+                    </div>
+                     <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">Customs ({customs}%)</span>
+                        <span className="font-medium">{customsAmount.toFixed(2)}</span>
+                    </div>
+                     <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">Installation ({installation}%)</span>
+                        <span className="font-medium">{installationAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">VAT ({vatRate * 100}%)</span>
                         <span className="font-medium">{vatAmount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between w-full max-w-xs font-bold text-lg">
+                    <div className="flex justify-between w-full max-w-xs font-bold text-lg border-t pt-2 mt-2">
                         <span>Grand Total</span>
                         <span>{grandTotal.toFixed(2)}</span>
                     </div>
