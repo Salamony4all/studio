@@ -62,9 +62,9 @@ const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
-  prompt: `You are an expert data extraction agent. Your primary and most critical task is to analyze the provided document and extract information from any Bill of Quantities (BOQ) with absolute, unerring precision.
+  prompt: `You are a meticulous data extraction agent. Your most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ) with absolute precision. Failure to extract every single item is a critical error.
 
-It is absolutely mandatory that you do not skip, omit, or misinterpret any line item from any BOQ you find. The entire purpose of this tool fails if even a single item is missed. Double-check your work to ensure every item is present.
+It is absolutely mandatory that you do not skip, omit, or misinterpret any line item from any BOQ you find.
 
 Analyze the document provided via the data URI and extract the following:
 
@@ -72,7 +72,7 @@ Analyze the document provided via the data URI and extract the following:
 
 2.  **Tables**: If there are other general tables, extract them completely. For each table, extract all column headers and every single corresponding row. Do not skip any data.
 
-Return the extracted data in the specified JSON format. Your top priority is the completeness of the BOQ extraction.
+**FINAL INSTRUCTION: Before you finalize your output, you MUST perform a final check. Count the number of line items in the BOQ you extracted and compare it to the number of line items in the source document. If the numbers do not match, you must re-run your extraction process until they do. Do not return an incomplete list.**
 
 Document: {{media url=fileDataUri}}`,
 });
