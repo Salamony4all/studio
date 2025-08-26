@@ -68,11 +68,7 @@ const extractDataPrompt = ai.definePrompt({
 
 **SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
 
-Analyze the document provided via the data URI and perform the following actions:
-
-1.  **Bill of Quantities (BOQs)**: Find any and all sections that are a Bill of Quantities. A BOQ has columns like Item No., Description, Quantity, Unit, Rate, and Amount. You are required to extract EVERY row. If a value is missing for a field like 'rate' or 'amount', you may omit that specific field for that row, but the description, quantity, and unit MUST be extracted for EVERY line.
-
-2.  **General Tables**: If you find other, non-BOQ tables, extract their headers and all corresponding rows completely.
+Analyze the document provided and find any and all sections that are a Bill of Quantities. A BOQ has columns like Item No., Description, Quantity, Unit, Rate, and Amount. You are required to extract EVERY row. If a value is missing for a field like 'rate' or 'amount', you may omit that specific field for that row, but the description, quantity, and unit MUST be extracted for EVERY line.
 
 **FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
