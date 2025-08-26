@@ -9,7 +9,15 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -102,7 +110,7 @@ export default function Home() {
   const vatAmount = finalSubtotal * vatRate;
   const grandTotal = finalSubtotal + vatAmount;
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     const escapeCsvCell = (cell: any) => {
         const cellStr = String(cell ?? '').trim();
         if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
@@ -151,6 +159,52 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
   }
+
+  const handleExportPdf = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
+
+    // Add Project Details
+    doc.setFontSize(16);
+    doc.text('Bill of Quantities', 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Project Name: ${projectName}`, 14, 30);
+    doc.text(`Incharge Person: ${inchargePerson}`, 14, 36);
+    doc.text(`Company Name: ${companyName}`, 14, 42);
+    doc.text(`Contact Number: ${contactNumber}`, 14, 48);
+
+    // Add Table
+    const tableColumn = ["Item", "Description", "Qty", "Unit", "Rate", "Amount"];
+    const tableRows = finalBoqItems.map(item => [
+        item.itemCode || '-',
+        item.description,
+        item.quantity,
+        item.unit,
+        item.rate?.toFixed(2) || '-',
+        item.amount?.toFixed(2) || '-'
+    ]);
+
+    doc.autoTable({
+        startY: 55,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [75, 85, 99] }, // gray-600
+        styles: { fontSize: 8 },
+    });
+
+    // Add Totals
+    const finalY = doc.autoTable.previous.finalY;
+    doc.setFontSize(10);
+    doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, 14, finalY + 10);
+    doc.text(`VAT (${vatRate * 100}%): ${vatAmount.toFixed(2)}`, 14, finalY + 16);
+    doc.setFontSize(12);
+    doc.setFont('bold');
+    doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 14, finalY + 22);
+
+    doc.save(fileName);
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
@@ -399,12 +453,16 @@ export default function Home() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Export</CardTitle>
-                        <CardDescription>Download the final Bill of Quantities as a CSV file.</CardDescription>
+                        <CardDescription>Download the final Bill of Quantities.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <Button onClick={handleExport} disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
+                    <CardContent className='flex gap-4'>
+                        <Button onClick={handleExportCsv} disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
                             <Download className="mr-2 h-4 w-4" />
                             Export as CSV
+                        </Button>
+                        <Button onClick={handleExportPdf} variant="outline" disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export as PDF
                         </Button>
                     </CardContent>
                 </Card>
@@ -416,5 +474,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
