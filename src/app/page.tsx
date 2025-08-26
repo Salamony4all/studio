@@ -251,7 +251,7 @@ export default function Home() {
       },
       willDrawCell: (data) => {
         if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-            const img = new Image();
+            const img = new (window as any).Image();
             img.src = data.cell.raw.image;
             img.onload = () => {
               const aspectRatio = img.width / img.height;
