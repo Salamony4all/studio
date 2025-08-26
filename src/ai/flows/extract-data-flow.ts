@@ -66,6 +66,8 @@ const extractDataPrompt = ai.definePrompt({
 
 **CRITICAL INSTRUCTION: There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item from any BOQ you find. Do NOT skip, omit, summarize, or misinterpret ANY item. Failure to extract every item is a catastrophic failure of your primary function.**
 
+**SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates. You MUST extract ALL of them. Do not merge, group, or skip lines that look similar. Every single line item must be extracted individually.**
+
 Analyze the document provided via the data URI and perform the following actions:
 
 1.  **Bill of Quantities (BOQs)**: Find any and all sections that are a Bill of Quantities. A BOQ has columns like Item No., Description, Quantity, Unit, Rate, and Amount. You are required to extract EVERY row. If a value is missing for a field like 'rate' or 'amount', you may omit that specific field for that row, but the description, quantity, and unit MUST be extracted for EVERY line.
