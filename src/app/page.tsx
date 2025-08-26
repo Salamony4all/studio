@@ -218,9 +218,11 @@ export default function Home() {
         if (item.imageUrl) {
             try {
                 let imageDataUri = item.imageUrl;
+                // Only fetch if it's a web URL, not a data URI
                 if (item.imageUrl.startsWith('http')) {
                     imageDataUri = await getImageAsDataUri(item.imageUrl);
                 }
+                // We pass the data URI to the cell's raw content
                 imageCell = { image: imageDataUri, width: 20 };
             } catch (e) {
                 console.error("Could not load image for PDF", e);
@@ -245,55 +247,63 @@ export default function Home() {
       headStyles: { fillColor: [75, 85, 99] }, // gray-600
       styles: { fontSize: 8, valign: 'middle' },
       columnStyles: {
-          1: { cellWidth: 22, minCellHeight: 22 }, // Image column
+          1: { cellWidth: 22 }, // Image column
+      },
+      willDrawCell: (data) => {
+        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+            const img = new Image();
+            img.src = data.cell.raw.image;
+            img.onload = () => {
+              const aspectRatio = img.width / img.height;
+              const imageWidth = data.cell.width - 4; // padding
+              const imageHeight = imageWidth / aspectRatio;
+              // Set the row height based on the image's aspect ratio
+              data.row.height = Math.max(data.row.height, imageHeight + 4);
+            }
+        }
       },
       didDrawCell: (data) => {
           if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-              try {
-                  const img = new (window as any).Image();
-                  img.src = data.cell.raw.image;
-                  
-                  const cellWidth = data.cell.width - 4; // padding
-                  const cellHeight = data.cell.height - 4; // padding
-                  
-                  const aspect = img.width / img.height;
-                  let imgWidth = cellWidth;
-                  let imgHeight = imgWidth / aspect;
+              const img = new (window as any).Image();
+              img.src = data.cell.raw.image;
+              img.onload = () => {
+                  try {
+                      const cellWidth = data.cell.width - 4; // padding
+                      const cellHeight = data.cell.height - 4; // padding
+                      
+                      const aspect = img.width / img.height;
+                      let imgWidth = cellWidth;
+                      let imgHeight = imgWidth / aspect;
 
-                  if (imgHeight > cellHeight) {
-                      imgHeight = cellHeight;
-                      imgWidth = imgHeight * aspect;
+                      if (imgHeight > cellHeight) {
+                          imgHeight = cellHeight;
+                          imgWidth = imgHeight * aspect;
+                      }
+
+                      const x = data.cell.x + (cellWidth - imgWidth) / 2 + 2;
+                      const y = data.cell.y + (cellHeight - imgHeight) / 2 + 2;
+
+                      if (x && y && imgWidth && imgHeight) {
+                          const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                          doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
+                      }
+                  
+                  } catch(e) {
+                      console.error("Failed to add image to PDF:", e);
+                      const x = data.cell.x + 2;
+                      const y = data.cell.y + 2;
+                      doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
+                      doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
                   }
-
-                  const x = data.cell.x + (cellWidth - imgWidth) / 2 + 2;
-                  const y = data.cell.y + (cellHeight - imgHeight) / 2 + 2;
-
-                  const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                  doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
-              
-              } catch(e) {
-                  console.error("Failed to add image to PDF:", e);
+              }
+              img.onerror = () => {
+                  console.error("Failed to load image for PDF cell");
                   const x = data.cell.x + 2;
                   const y = data.cell.y + 2;
                   doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
                   doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
               }
           }
-      },
-      willDrawCell: (data) => {
-        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-          try {
-            const img = new (window as any).Image();
-            img.src = data.cell.raw.image;
-            const aspectRatio = img.width / img.height;
-            const imageWidth = data.cell.width - 4; // padding
-            const imageHeight = imageWidth / aspectRatio;
-            // Set the row height based on the image's aspect ratio
-            data.row.height = Math.max(data.row.height, imageHeight + 4);
-          } catch(e) {
-            console.error("Failed to calculate image height:", e);
-          }
-        }
       },
     });
 
@@ -603,3 +613,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
