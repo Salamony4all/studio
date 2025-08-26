@@ -6,18 +6,19 @@ export async function extractTableData(pdfDataUri: string) {
   try {
     const result = await detectTables({ pdfDataUri });
 
-    if (!result || !result.tableData) {
+    if (!result || !result.tables || result.tables.length === 0) {
       throw new Error('AI response did not contain table data.');
     }
+
+    // Since we expect multiple tables, we will work with the first one for now.
+    // In the future, we can add UI to select which table to display.
+    const firstTable = result.tables[0];
     
-    // The AI is prompted to return valid JSON, so we parse it here.
-    const parsedData = JSON.parse(result.tableData);
-    
-    if (!Array.isArray(parsedData)) {
+    if (!Array.isArray(firstTable)) {
       throw new Error('Extracted data is not in the expected array format.');
     }
 
-    return { data: parsedData };
+    return { data: firstTable };
 
   } catch (error) {
     console.error('Error extracting table data:', error);
