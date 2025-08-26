@@ -1,0 +1,3 @@
+// This is a placeholder logo for "Alshaya Enterprise".
+// You can replace this with your actual logo by providing a base64 encoded data URI.
+export const alshayaLogo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAABDCAMAAACf/94wAAAAXVBMVEX////AAD/e3v/ra3/ycn/v7//T0//Zmb/ERH/vr7/oKD/3t7/paX/jY3/bGz/5ub/fHz/qan/ubn/mJj/7u7/X1//d3f/aWn/srL/hIT/Kir/Ojr/ICD/Pz//RUX5s0DEAAAA+UlEQVR4nO3dy26DMBBAYVEUVBEQEf//X09bCEo9BwM29/bZmWtOSf6iSJJOp2kYhqEIajs3YRhGU+QyT0YIYRgh/L/oK4QQwhDC04/whxBCGIYQwkf4wx8hxD+GEEJgGEIIh2EIIX4JIX4JIYQfIYTwQ4gQAhVCCCGEEEIIIYQQQgghhBBCCH8mNf90XQghhBBCCCGEEEIIIYQQQgghhBBCSNQJIYQQQgghhBBCCCGEEEIIIYQQQgiR/gkhhBBCCCGEEEIIIYQQQgghhBBCCCFS3x/CiVfAGCEyvAQRQlhGCAshhBACIYQQQgjx/iGE8N+GEEJk2KELQgjhi0QIIYRoJEKI8B/9dUiSJJP+AnxkiYjZso7QAAAAAElFTkSuQmCC';

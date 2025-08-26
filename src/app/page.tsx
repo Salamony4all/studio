@@ -12,6 +12,7 @@ import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Download, Loader2, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { alshayaLogo } from '@/lib/logo';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -164,14 +165,17 @@ export default function Home() {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
 
+    // Add Logo
+    doc.addImage(alshayaLogo, 'PNG', 14, 10, 60, 20);
+
     // Add Project Details
     doc.setFontSize(16);
-    doc.text('Bill of Quantities', 14, 20);
+    doc.text('Bill of Quantities', 14, 40);
     doc.setFontSize(12);
-    doc.text(`Project Name: ${projectName}`, 14, 30);
-    doc.text(`Incharge Person: ${inchargePerson}`, 14, 36);
-    doc.text(`Company Name: ${companyName}`, 14, 42);
-    doc.text(`Contact Number: ${contactNumber}`, 14, 48);
+    doc.text(`Project Name: ${projectName}`, 14, 50);
+    doc.text(`Incharge Person: ${inchargePerson}`, 14, 56);
+    doc.text(`Company Name: ${companyName}`, 14, 62);
+    doc.text(`Contact Number: ${contactNumber}`, 14, 68);
 
     // Add Table
     const tableColumn = ["Item", "Description", "Qty", "Unit", "Rate", "Amount"];
@@ -185,7 +189,7 @@ export default function Home() {
     ]);
 
     doc.autoTable({
-        startY: 55,
+        startY: 75,
         head: [tableColumn],
         body: tableRows,
         theme: 'striped',
