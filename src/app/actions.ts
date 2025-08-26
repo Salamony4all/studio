@@ -7,18 +7,19 @@ export async function extractTableData(pdfDataUri: string) {
     const result = await detectTables({ pdfDataUri });
 
     if (!result || !result.tables || result.tables.length === 0) {
-      throw new Error('AI response did not contain table data.');
+      throw new Error('AI response did not contain any tables.');
     }
-
-    // Since we expect multiple tables, we will work with the first one for now.
-    // In the future, we can add UI to select which table to display.
-    const firstTable = result.tables[0];
     
-    if (!Array.isArray(firstTable) || firstTable.length === 0) {
+    // The AI returns an array of tables. Each table is an array of row objects.
+    // We will take all tables and flatten them into a single array of rows for now.
+    // This handles cases where the AI finds one or more tables.
+    const allRows = result.tables.flat();
+
+    if (!Array.isArray(allRows) || allRows.length === 0) {
       throw new Error('No table data found or data is in an invalid format.');
     }
 
-    return { data: firstTable };
+    return { data: allRows };
 
   } catch (error) {
     console.error('Error extracting table data:', error);
