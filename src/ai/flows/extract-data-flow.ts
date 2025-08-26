@@ -64,11 +64,9 @@ const extractDataPrompt = ai.definePrompt({
   output: { schema: ExtractedDataSchema },
   prompt: `You are an expert data extraction agent. Your single most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ).
 
-**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. Failure to extract every item is a catastrophic failure of your primary function.**
+**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. Pay close attention to the table headers (like 'Item No.', 'Description', etc.) to correctly identify the start of the data rows. Process each row only once. Failure to extract every item is a catastrophic failure of your primary function.**
 
 **SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
-
-Analyze the document provided and find any and all sections that are a Bill of Quantities. A BOQ has columns like Item No., Description, Quantity, Unit, Rate, and Amount. You are required to extract EVERY row. If a value is missing for a field like 'rate' or 'amount', you may omit that specific field for that row, but the description, quantity, and unit MUST be extracted for EVERY line.
 
 **FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
