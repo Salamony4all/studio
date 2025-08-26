@@ -9,11 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData, getImageAsDataUri } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
-import { Download, Loader2, FileText, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { Download, Loader2, FileText, UploadCloud, Image as ImageIcon, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -39,6 +40,9 @@ export default function Home() {
   const [inchargePerson, setInchargePerson] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,9 +198,9 @@ export default function Home() {
   }
 
   const handleExportPdf = async () => {
+    setIsPdfGenerating(true);
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
-
+    
     // Add Header
     doc.setFontSize(20);
     doc.text('Alshaya Enterprises', 14, 20);
@@ -218,11 +222,9 @@ export default function Home() {
         if (item.imageUrl) {
             try {
                 let imageDataUri = item.imageUrl;
-                // Only fetch if it's a web URL, not a data URI
                 if (item.imageUrl.startsWith('http')) {
                     imageDataUri = await getImageAsDataUri(item.imageUrl);
                 }
-                // We pass the data URI to the cell's raw content
                 imageCell = { image: imageDataUri, width: 20 };
             } catch (e) {
                 console.error("Could not load image for PDF", e);
@@ -257,7 +259,6 @@ export default function Home() {
               const aspectRatio = img.width / img.height;
               const imageWidth = data.cell.width - 4; // padding
               const imageHeight = imageWidth / aspectRatio;
-              // Set the row height based on the image's aspect ratio
               data.row.height = Math.max(data.row.height, imageHeight + 4);
             }
         }
@@ -268,8 +269,8 @@ export default function Home() {
               img.src = data.cell.raw.image;
               img.onload = () => {
                   try {
-                      const cellWidth = data.cell.width - 4; // padding
-                      const cellHeight = data.cell.height - 4; // padding
+                      const cellWidth = data.cell.width - 4;
+                      const cellHeight = data.cell.height - 4;
                       
                       const aspect = img.width / img.height;
                       let imgWidth = cellWidth;
@@ -316,8 +317,21 @@ export default function Home() {
     doc.setFont('bold' as any);
     doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 14, finalY + 22);
 
-    doc.save(fileName);
+    const pdfDataUri = doc.output('datauristring');
+    setPdfPreviewUrl(pdfDataUri);
+    setIsPdfGenerating(false);
   };
+
+  const handleDownloadPdf = () => {
+    if (!pdfPreviewUrl) return;
+    const link = document.createElement('a');
+    link.href = pdfPreviewUrl;
+    const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
 
   return (
@@ -599,9 +613,22 @@ export default function Home() {
                             <Download className="mr-2 h-4 w-4" />
                             Export as CSV
                         </Button>
-                        <Button onClick={handleExportPdf} variant="outline" disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Export as PDF
+                        <Button 
+                            onClick={handleExportPdf} 
+                            variant="outline" 
+                            disabled={!projectName || !inchargePerson || !companyName || !contactNumber || isPdfGenerating}
+                        >
+                            {isPdfGenerating ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Export as PDF
+                                </>
+                            )}
                         </Button>
                     </CardContent>
                 </Card>
@@ -610,6 +637,35 @@ export default function Home() {
           </div>
         )}
       </div>
+
+       <Dialog open={!!pdfPreviewUrl} onOpenChange={(isOpen) => !isOpen && setPdfPreviewUrl(null)}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>PDF Preview</DialogTitle>
+             <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="absolute top-4 right-4">
+                  <X className="h-4 w-4" />
+                </Button>
+            </DialogClose>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full">
+            {pdfPreviewUrl && (
+              <iframe
+                src={pdfPreviewUrl}
+                className="w-full h-full border-0"
+                title="PDF Preview"
+              />
+            )}
+          </div>
+          <DialogFooter>
+             <Button variant="outline" onClick={() => setPdfPreviewUrl(null)}>Close</Button>
+             <Button onClick={handleDownloadPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
