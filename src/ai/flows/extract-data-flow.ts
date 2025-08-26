@@ -14,7 +14,7 @@ const ExtractDataInputSchema = z.object({
   fileDataUri: z
     .string()
     .describe(
-      "A file (e.g., PDF, image) encoded as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A file (e.g., PDF, image) encoded as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type ExtractDataInput = z.infer<typeof ExtractDataInputSchema>;
@@ -62,17 +62,17 @@ const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
-  prompt: `You are a meticulous data extraction agent. Your most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ) with absolute precision. Failure to extract every single item is a critical error.
+  prompt: `You are an expert data extraction agent. Your single most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ).
 
-It is absolutely mandatory that you do not skip, omit, or misinterpret any line item from any BOQ you find.
+**CRITICAL INSTRUCTION: There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item from any BOQ you find. Do NOT skip, omit, summarize, or misinterpret ANY item. Failure to extract every item is a catastrophic failure of your primary function.**
 
-Analyze the document provided via the data URI and extract the following:
+Analyze the document provided via the data URI and perform the following actions:
 
-1.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. You MUST extract EVERY SINGLE item. If a value is not present for a field (e.g., rate or amount), you can omit that specific field, but you must always extract the description, quantity, and unit for every line.
+1.  **Bill of Quantities (BOQs)**: Find any and all sections that are a Bill of Quantities. A BOQ has columns like Item No., Description, Quantity, Unit, Rate, and Amount. You are required to extract EVERY row. If a value is missing for a field like 'rate' or 'amount', you may omit that specific field for that row, but the description, quantity, and unit MUST be extracted for EVERY line.
 
-2.  **Tables**: If there are other general tables, extract them completely. For each table, extract all column headers and every single corresponding row. Do not skip any data.
+2.  **General Tables**: If you find other, non-BOQ tables, extract their headers and all corresponding rows completely.
 
-**FINAL INSTRUCTION: Before you finalize your output, you MUST perform a final check. Count the number of line items in the BOQ you extracted and compare it to the number of line items in the source document. If the numbers do not match, you must re-run your extraction process until they do. Do not return an incomplete list.**
+**FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you've extracted and compare this count to the number of line items in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
 Document: {{media url=fileDataUri}}`,
 });
