@@ -98,7 +98,7 @@ export default function Home() {
   const customsAmount = originalSubtotal * (customs / 100);
   const installationAmount = originalSubtotal * (installation / 100);
   
-  const vatRate = 0.15; // 15% VAT
+  const vatRate = 0.05; // 5% VAT
   const vatAmount = finalSubtotal * vatRate;
   const grandTotal = finalSubtotal + vatAmount;
 
