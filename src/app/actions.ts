@@ -14,8 +14,8 @@ export async function extractTableData(pdfDataUri: string) {
     // In the future, we can add UI to select which table to display.
     const firstTable = result.tables[0];
     
-    if (!Array.isArray(firstTable)) {
-      throw new Error('Extracted data is not in the expected array format.');
+    if (!Array.isArray(firstTable) || firstTable.length === 0) {
+      throw new Error('No table data found or data is in an invalid format.');
     }
 
     return { data: firstTable };
