@@ -36,8 +36,7 @@ const BOQItemSchema = z.object({
     quantity: z.number().describe('The quantity of the item.'),
     unit: z.string().describe('The unit of measurement (e.g., sqm, nos, kg).'),
     rate: z.number().optional().describe('The rate per unit.'),
-    amount: z.number().optional().describe('The total amount for the item (quantity * rate).'),
-    image: z.string().optional().describe('A data URI of a generated image representing the item.')
+    amount: z.number().optional().describe('The total amount for the item (quantity * rate).')
 });
 
 const BOQSchema = z.object({
@@ -66,7 +65,7 @@ const extractDataPrompt = ai.definePrompt({
   prompt: `You are an expert data extraction agent. Your task is to analyze the provided document and extract all structured information with high accuracy.
 
 Analyze the document provided via the data URI and extract the following information:
-1.  **Tables**: Identify all tables. For each table, extract the column headers and all corresponding rows.
+1.  **Tables**: Identify all tables. For each table, extract all column headers and every single corresponding row with perfect accuracy. Ensure the table format is preserved and the data is organized cleanly. Do not skip any data.
 2.  **Lists**: Identify all bulleted or numbered lists. For each list, extract its title (if available) and all items.
 3.  **Prices**: Identify all monetary values mentioned in the document. Extract them exactly as they appear, including currency symbols.
 4.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. Extract all items from each BOQ you find. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit.
