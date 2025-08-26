@@ -215,9 +215,9 @@ export default function Home() {
     doc.text(`Contact Number: ${contactNumber}`, 14, 68);
 
     // Add Table
-    const tableColumn = ["Image", "Item", "Description", "Quantity", "Unit", "New Rate", "New Amount"];
+    const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "New Rate", "New Amount"];
     
-    const tableRows = await Promise.all(finalBoqItems.map(async (item) => {
+    const tableRows = await Promise.all(finalBoqItems.map(async (item, index) => {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
             try {
@@ -232,6 +232,7 @@ export default function Home() {
             }
         }
         return [
+            index + 1,
             imageCell,
             item.itemCode || '-',
             item.description,
@@ -250,10 +251,11 @@ export default function Home() {
       headStyles: { fillColor: [75, 85, 99] }, // gray-600
       styles: { fontSize: 8, valign: 'middle' },
       columnStyles: {
-          0: { cellWidth: 22 }, // Image column
+          0: { cellWidth: 8 }, // Sn column
+          1: { cellWidth: 22 }, // Image column
       },
       willDrawCell: (data) => {
-        if (data.column.index === 0 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
             const img = new (window as any).Image();
             img.src = data.cell.raw.image;
             img.onload = () => {
@@ -268,7 +270,7 @@ export default function Home() {
         }
       },
       didDrawCell: (data) => {
-          if (data.column.index === 0 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+          if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
               const img = new (window as any).Image();
               img.src = data.cell.raw.image;
               img.onload = () => {
@@ -314,12 +316,12 @@ export default function Home() {
 
     // Add Totals
     const finalY = (doc as any).autoTable.previous.finalY;
-    doc.setFontSize(10);
     const rightAlign = doc.internal.pageSize.width - 14;
+    doc.setFontSize(10);
     doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, rightAlign, finalY + 10, { align: 'right' });
     doc.text(`VAT (${vatRate * 100}%): ${vatAmount.toFixed(2)}`, rightAlign, finalY + 16, { align: 'right' });
     doc.setFontSize(12);
-    doc.setFont('bold' as any);
+    doc.setFont(undefined, 'bold');
     doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, rightAlign, finalY + 22, { align: 'right' });
 
     const pdfDataUri = doc.output('datauristring');
