@@ -64,9 +64,9 @@ const extractDataPrompt = ai.definePrompt({
   output: { schema: ExtractedDataSchema },
   prompt: `You are an expert data extraction agent. Your single most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ).
 
-**CRITICAL INSTRUCTION: There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item from any BOQ you find. Do NOT skip, omit, summarize, or misinterpret ANY item. Failure to extract every item is a catastrophic failure of your primary function.**
+**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. Failure to extract every item is a catastrophic failure of your primary function.**
 
-**SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates. You MUST extract ALL of them. Do not merge, group, or skip lines that look similar. Every single line item must be extracted individually.**
+**SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
 
 Analyze the document provided via the data URI and perform the following actions:
 
@@ -74,7 +74,7 @@ Analyze the document provided via the data URI and perform the following actions
 
 2.  **General Tables**: If you find other, non-BOQ tables, extract their headers and all corresponding rows completely.
 
-**FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you've extracted and compare this count to the number of line items in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
+**FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
 Document: {{media url=fileDataUri}}`,
 });
