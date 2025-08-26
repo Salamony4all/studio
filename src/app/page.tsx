@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { extractData } from './actions';
+import { extractData, getImageAsDataUri } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Download, Loader2, FileText, UploadCloud, Image as ImageIcon } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -217,23 +217,15 @@ export default function Home() {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
             try {
-                // Check if the imageUrl is a data URI
-                if (item.imageUrl.startsWith('data:image')) {
-                    imageCell = { image: item.imageUrl, width: 20, height: 20 };
-                } else {
-                    // Otherwise, fetch the image from the URL
-                    const response = await fetch(item.imageUrl);
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    await new Promise<void>((resolve, reject) => {
-                        reader.onload = () => {
-                            imageCell = { image: reader.result as string, width: 20, height: 20 };
-                            resolve();
-                        };
-                        reader.onerror = reject;
-                        reader.readAsDataURL(blob);
-                    });
+                let imageDataUri = item.imageUrl;
+                // If it's a web URL, fetch it through the server action to avoid CORS issues.
+                if (item.imageUrl.startsWith('http')) {
+                    imageDataUri = await getImageAsDataUri(item.imageUrl);
                 }
+                
+                // Now we assume imageDataUri is a valid data URI (either from source or fetched)
+                imageCell = { image: imageDataUri, width: 20, height: 20 };
+
             } catch (e) {
                 console.error("Could not load image for PDF", e);
             }
@@ -261,8 +253,15 @@ export default function Home() {
         },
         didDrawCell: (data) => {
             if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-                const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
+                try {
+                    const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                    doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
+                } catch(e) {
+                    console.error("Failed to add image to PDF:", e);
+                    // Draw a placeholder box if image adding fails
+                    doc.rect(data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
+                    doc.text("X", data.cell.x + data.cell.raw.width / 2, data.cell.y + data.cell.raw.height / 2, { align: 'center', baseline: 'middle' });
+                }
             }
         }
     });
@@ -573,5 +572,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
