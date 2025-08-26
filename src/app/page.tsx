@@ -49,7 +49,8 @@ export default function Home() {
             setError('Could not extract any data. The format may be unsupported.');
           }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred during extraction.');
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during extraction.';
+            setError(`Server error: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }

@@ -84,14 +84,17 @@ const extractDataFlow = ai.defineFlow(
     outputSchema: ExtractedDataSchema,
   },
   async (input) => {
-    // First, extract all the data from the document.
-    const { output: extractedData } = await extractDataPrompt(input);
+    const llmResponse = await extractDataPrompt(input);
+    const extractedData = llmResponse.output;
 
-    if (!extractedData || !extractedData.boqs) {
-      return extractedData!;
+    if (!extractedData) {
+        throw new Error("Failed to extract data from the document.");
+    }
+    
+    if (!extractedData.boqs || extractedData.boqs.length === 0) {
+      return extractedData;
     }
 
-    // Now, for each BOQ item, generate an image in parallel.
     const updatedBoqs = await Promise.all(
       extractedData.boqs.map(async (boq) => {
         const updatedItems = await Promise.all(
@@ -107,7 +110,6 @@ const extractDataFlow = ai.defineFlow(
               return { ...item, image: media.url };
             } catch (e) {
               console.error(`Failed to generate image for item: ${item.description}`, e);
-              // If image generation fails, just return the item without an image.
               return item;
             }
           })
