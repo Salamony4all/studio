@@ -25,7 +25,7 @@ const Progress = React.forwardRef<
                     "h-full w-full flex-1 bg-primary transition-all",
                     isIndeterminate && "animate-progress-indeterminate"
                 )}
-                style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
+                style={{ transform: `translateX(-${100 - (value ?? 100)}%)`, ...(isIndeterminate && {animation: 'progress-indeterminate 1.5s infinite ease-in-out'}) }}
             />
         </ProgressPrimitive.Root>
     )

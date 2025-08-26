@@ -203,7 +203,10 @@ export default function Home() {
     
     // Add Header
     doc.setFontSize(20);
-    doc.text('Estimation Pro', 14, 20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Alshaya Enterprise™', 14, 20);
+    doc.setFont(undefined, 'normal');
+
 
     // Add Project Details
     doc.setFontSize(16);
@@ -393,7 +396,7 @@ export default function Home() {
             </div>
             {isLoading && (
                 <div className="mt-4 w-full space-y-2">
-                    <Progress />
+                    <Progress value={undefined} />
                     <p className="text-sm text-center text-muted-foreground animate-pulse">Analyzing your document...</p>
                 </div>
             )}
