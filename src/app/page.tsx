@@ -173,7 +173,7 @@ export default function Home() {
                             {boq.items.map((item, itemIndex) => (
                                 <TableRow key={`boq-item-${boqIndex}-${itemIndex}`}>
                                     <TableCell>
-                                      {item.image && (
+                                      {item.image ? (
                                         <Image
                                           src={item.image}
                                           alt={item.description}
@@ -181,6 +181,10 @@ export default function Home() {
                                           height={64}
                                           className="object-cover rounded-md"
                                         />
+                                      ) : (
+                                        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground">
+                                          No Image
+                                        </div>
                                       )}
                                     </TableCell>
                                     <TableCell>{item.itemCode}</TableCell>
