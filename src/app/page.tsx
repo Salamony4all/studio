@@ -137,21 +137,6 @@ export default function Home() {
               </Card>
             ))}
 
-            {extractedData.lists?.map((listData, listIndex) => (
-              <Card key={`list-${listIndex}`}>
-                <CardHeader>
-                  <CardTitle>{listData.title || `List ${listIndex + 1}`}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 list-disc list-inside">
-                    {listData.items.map((item, itemIndex) => (
-                      <li key={`list-item-${listIndex}-${itemIndex}`}>{item}</li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-            
             {extractedData.boqs?.map((boq, boqIndex) => (
               <Card key={`boq-${boqIndex}`}>
                 <CardHeader>
@@ -187,20 +172,6 @@ export default function Home() {
               </Card>
             ))}
 
-            {extractedData.prices?.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Extracted Prices</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  {extractedData.prices.map((price, priceIndex) => (
-                    <Badge variant="secondary" key={`price-${priceIndex}`} className="text-lg">
-                      {price}
-                    </Badge>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </div>
