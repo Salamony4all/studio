@@ -203,7 +203,7 @@ export default function Home() {
     
     // Add Header
     doc.setFontSize(20);
-    doc.text('Alshaya Enterprises', 14, 20);
+    doc.text('Estimation Pro', 14, 20);
 
     // Add Project Details
     doc.setFontSize(16);
@@ -215,13 +215,14 @@ export default function Home() {
     doc.text(`Contact Number: ${contactNumber}`, 14, 68);
 
     // Add Table
-    const tableColumn = ["Item", "Image", "Description", "Qty", "Unit", "Rate", "Amount"];
+    const tableColumn = ["Image", "Item", "Description", "Quantity", "Unit", "New Rate", "New Amount"];
     
     const tableRows = await Promise.all(finalBoqItems.map(async (item) => {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
             try {
                 let imageDataUri = item.imageUrl;
+                // If the imageUrl is a web URL, fetch it and convert to data URI
                 if (item.imageUrl.startsWith('http')) {
                     imageDataUri = await getImageAsDataUri(item.imageUrl);
                 }
@@ -231,8 +232,8 @@ export default function Home() {
             }
         }
         return [
-            item.itemCode || '-',
             imageCell,
+            item.itemCode || '-',
             item.description,
             item.quantity,
             item.unit,
@@ -249,22 +250,25 @@ export default function Home() {
       headStyles: { fillColor: [75, 85, 99] }, // gray-600
       styles: { fontSize: 8, valign: 'middle' },
       columnStyles: {
-          1: { cellWidth: 22 }, // Image column
+          0: { cellWidth: 22 }, // Image column
       },
       willDrawCell: (data) => {
-        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+        if (data.column.index === 0 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
             const img = new (window as any).Image();
             img.src = data.cell.raw.image;
             img.onload = () => {
               const aspectRatio = img.width / img.height;
               const imageWidth = data.cell.width - 4; // padding
               const imageHeight = imageWidth / aspectRatio;
-              data.row.height = Math.max(data.row.height, imageHeight + 4);
+              // Dynamically set row height to avoid image distortion
+              if (data.row.height < imageHeight) {
+                data.row.height = imageHeight + 4;
+              }
             }
         }
       },
       didDrawCell: (data) => {
-          if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+          if (data.column.index === 0 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
               const img = new (window as any).Image();
               img.src = data.cell.raw.image;
               img.onload = () => {
@@ -311,11 +315,12 @@ export default function Home() {
     // Add Totals
     const finalY = (doc as any).autoTable.previous.finalY;
     doc.setFontSize(10);
-    doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, 14, finalY + 10);
-    doc.text(`VAT (${vatRate * 100}%): ${vatAmount.toFixed(2)}`, 14, finalY + 16);
+    const rightAlign = doc.internal.pageSize.width - 14;
+    doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, rightAlign, finalY + 10, { align: 'right' });
+    doc.text(`VAT (${vatRate * 100}%): ${vatAmount.toFixed(2)}`, rightAlign, finalY + 16, { align: 'right' });
     doc.setFontSize(12);
     doc.setFont('bold' as any);
-    doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 14, finalY + 22);
+    doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, rightAlign, finalY + 22, { align: 'right' });
 
     const pdfDataUri = doc.output('datauristring');
     setPdfPreviewUrl(pdfDataUri);
@@ -669,5 +674,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
