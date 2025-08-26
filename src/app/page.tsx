@@ -248,7 +248,7 @@ export default function Home() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl font-bold tracking-tight">
-              Tabula Extract
+              Estimation Pro
             </CardTitle>
             <CardDescription>
               Upload a file (e.g., PDF, image) to extract tables and Bill of Quantities (BOQ).
