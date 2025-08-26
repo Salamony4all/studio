@@ -62,13 +62,17 @@ const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
-  prompt: `You are an expert data extraction agent. Your task is to analyze the provided document and extract all structured information with absolute precision.
+  prompt: `You are an expert data extraction agent. Your primary and most critical task is to analyze the provided document and extract information from any Bill of Quantities (BOQ) with absolute, unerring precision.
 
-Analyze the document provided via the data URI and extract the following information:
-1.  **Tables**: Identify all tables. For each table, extract all column headers and every single corresponding row. Do not skip any data.
-2.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. It is CRITICAL that you extract EVERY SINGLE item from each BOQ you find. DO NOT skip any line items. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit. The accuracy of the final total depends on you extracting every item.
+It is absolutely mandatory that you do not skip, omit, or misinterpret any line item from any BOQ you find. The entire purpose of this tool fails if even a single item is missed. Double-check your work to ensure every item is present.
 
-Return the extracted data in the specified JSON format.
+Analyze the document provided via the data URI and extract the following:
+
+1.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. You MUST extract EVERY SINGLE item. If a value is not present for a field (e.g., rate or amount), you can omit that specific field, but you must always extract the description, quantity, and unit for every line.
+
+2.  **Tables**: If there are other general tables, extract them completely. For each table, extract all column headers and every single corresponding row. Do not skip any data.
+
+Return the extracted data in the specified JSON format. Your top priority is the completeness of the BOQ extraction.
 
 Document: {{media url=fileDataUri}}`,
 });
