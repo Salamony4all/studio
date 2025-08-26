@@ -1,14 +1,15 @@
 'use server';
 /**
- * @fileOverview A flow for extracting structured data from a document.
+ * @fileOverview A flow for extracting structured data from a document and generating images for BOQ items.
  * 
- * - extractDataFromFile: A function that handles the data extraction process.
+ * - extractDataFromFile: A function that handles the data extraction and image generation process.
  * - ExtractDataInput: The input type for the extractDataFromFile function.
  * - ExtractedData: The return type for the extractDataFromFile function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { stream } from 'genkit/stream';
 
 const ExtractDataInputSchema = z.object({
   fileDataUri: z
@@ -36,7 +37,8 @@ const BOQItemSchema = z.object({
     quantity: z.number().describe('The quantity of the item.'),
     unit: z.string().describe('The unit of measurement (e.g., sqm, nos, kg).'),
     rate: z.number().optional().describe('The rate per unit.'),
-    amount: z.number().optional().describe('The total amount for the item (quantity * rate).')
+    amount: z.number().optional().describe('The total amount for the item (quantity * rate).'),
+    image: z.string().optional().describe("A data URI of a generated image for the item, in the format 'data:<mimetype>;base64,<encoded_data>'."),
 });
 
 const BOQSchema = z.object({
@@ -90,7 +92,28 @@ const extractDataFlow = ai.defineFlow(
     if (!extractedData) {
         throw new Error("Failed to extract data from the document.");
     }
+
+    if (extractedData.boqs) {
+        for (const boq of extractedData.boqs) {
+            await Promise.all(boq.items.map(async (item) => {
+                try {
+                    const imageGenResponse = await ai.generate({
+                        model: 'googleai/imagen-4.0-fast-generate-001',
+                        prompt: `Generate a realistic image of: ${item.description}`,
+                    });
+                    const image = await imageGenResponse.media();
+                    if (image?.url) {
+                        item.image = image.url;
+                    }
+                } catch (e) {
+                    console.error(`Failed to generate image for item: ${item.description}`, e);
+                }
+            }));
+        }
+    }
     
     return extractedData;
   }
 );
+
+    

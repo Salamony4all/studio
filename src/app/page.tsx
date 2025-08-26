@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Loader2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import Image from 'next/image';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -163,6 +163,7 @@ export default function Home() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Item</TableHead>
+                                <TableHead>Visual</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead className="text-right">Quantity</TableHead>
                                 <TableHead>Unit</TableHead>
@@ -174,6 +175,21 @@ export default function Home() {
                             {boq.items.map((item, itemIndex) => (
                                 <TableRow key={`boq-item-${boqIndex}-${itemIndex}`}>
                                     <TableCell>{item.itemCode}</TableCell>
+                                    <TableCell>
+                                        {item.image ? (
+                                            <Image
+                                                src={item.image}
+                                                alt={item.description}
+                                                width={64}
+                                                height={64}
+                                                className="rounded-md object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground">
+                                                No Image
+                                            </div>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
                                     <TableCell>{item.unit}</TableCell>
@@ -209,11 +225,12 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {extractedData.images.map((imageUri, imageIndex) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       key={`image-${imageIndex}`}
                       src={imageUri}
                       alt={`Extracted image ${imageIndex + 1}`}
+                      width={200}
+                      height={200}
                       className="rounded-lg object-cover w-full h-full"
                     />
                   ))}
@@ -226,3 +243,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
