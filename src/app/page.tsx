@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -39,11 +40,17 @@ export default function Home() {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const dataUri = reader.result as string;
-        const result = await extractData({ fileDataUri: dataUri });
-        if (result) {
-          setExtractedData(result);
-        } else {
-           setError('Could not extract any data. The format may be unsupported.');
+        try {
+          const result = await extractData({ fileDataUri: dataUri });
+          if (result) {
+            setExtractedData(result);
+          } else {
+            setError('Could not extract any data. The format may be unsupported.');
+          }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred during extraction.');
+        } finally {
+            setIsLoading(false);
         }
       };
       reader.onerror = () => {
@@ -53,7 +60,6 @@ export default function Home() {
       reader.readAsDataURL(file);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -88,6 +94,7 @@ export default function Home() {
                 )}
               </Button>
             </div>
+            {isLoading && <Progress value={undefined} className="w-full mt-4" />}
              {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
           </CardContent>
         </Card>
