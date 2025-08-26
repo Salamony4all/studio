@@ -96,9 +96,11 @@ export default function Home() {
               </Button>
             </div>
             {isLoading && (
-              <div className="mt-4 w-full">
-                <Progress value={undefined} />
-              </div>
+                <div className="mt-4 w-full">
+                    <div className="h-2 w-full bg-primary/20 overflow-hidden rounded-full">
+                        <div className="h-full bg-primary animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                    </div>
+                </div>
             )}
              {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
           </CardContent>
@@ -195,6 +197,25 @@ export default function Home() {
                     <Badge variant="secondary" key={`price-${priceIndex}`} className="text-lg">
                       {price}
                     </Badge>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            
+            {extractedData.images?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Extracted Images</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {extractedData.images.map((imageUri, imageIndex) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={`image-${imageIndex}`}
+                      src={imageUri}
+                      alt={`Extracted image ${imageIndex + 1}`}
+                      className="rounded-lg object-cover w-full h-full"
+                    />
                   ))}
                 </CardContent>
               </Card>

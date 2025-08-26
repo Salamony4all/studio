@@ -50,6 +50,7 @@ const ExtractedDataSchema = z.object({
   lists: z.array(ListSchema).optional().describe('All lists found in the document.'),
   prices: z.array(z.string()).optional().describe('Any individual prices or costs mentioned, formatted with currency symbols.'),
   boqs: z.array(BOQSchema).optional().describe('Any Bill of Quantities (BOQ) found in the document.'),
+  images: z.array(z.string().describe("A data URI of an extracted image, in the format 'data:<mimetype>;base64,<encoded_data>'.")).optional().describe('All images found in the document.'),
 });
 export type ExtractedData = z.infer<typeof ExtractedDataSchema>;
 
@@ -69,6 +70,7 @@ Analyze the document provided via the data URI and extract the following informa
 2.  **Lists**: Identify all bulleted or numbered lists. For each list, extract its title (if available) and all items.
 3.  **Prices**: Identify all monetary values mentioned in the document. Extract them exactly as they appear, including currency symbols.
 4.  **Bill of Quantities (BOQs)**: Identify any section that resembles a Bill of Quantities. A BOQ typically has columns for Item No., Description, Quantity, Unit, Rate, and Amount. Extract all items from each BOQ you find. If a value is not present for a field (e.g., rate or amount), omit it, but always extract the description, quantity, and unit.
+5.  **Images**: Identify all images within the document. Extract each image and return it as a data URI.
 
 Return the extracted data in the specified JSON format.
 
