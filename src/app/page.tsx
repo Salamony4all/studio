@@ -57,10 +57,10 @@ export default function Home() {
         const dataUri = reader.result as string;
         try {
           const result = await extractData({ fileDataUri: dataUri });
-          if (result) {
+          if (result && (result.boqs?.length || result.tables?.length)) {
             setExtractedData(result);
           } else {
-            setError('Could not extract any data. The format may be unsupported.');
+            setError('Could not extract any data. The format may be unsupported or the document empty.');
           }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during extraction.';
@@ -213,7 +213,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Project Details</CardTitle>
                 <CardDescription>
-                  Enter the project and contact information.
+                  Enter the project and contact information for the export.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-6">
@@ -399,10 +399,10 @@ export default function Home() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Export</CardTitle>
-                        <CardDescription>Download the final Bill of Quantities.</CardDescription>
+                        <CardDescription>Download the final Bill of Quantities as a CSV file.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleExport}>
+                        <Button onClick={handleExport} disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
                             <Download className="mr-2 h-4 w-4" />
                             Export as CSV
                         </Button>
@@ -416,3 +416,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
