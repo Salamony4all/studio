@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
 import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -60,10 +58,17 @@ export default function Home() {
       }
       reader.readAsDataURL(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
+
+  const allBoqItems = extractedData?.boqs?.flatMap(boq => boq.items) || [];
+  const subtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
+  const vatRate = 0.15; // 15% VAT
+  const vatAmount = subtotal * vatRate;
+  const grandTotal = subtotal + vatAmount;
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
@@ -71,10 +76,10 @@ export default function Home() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl font-bold tracking-tight">
-              Document Data Extractor
+              Tabula Extract
             </CardTitle>
             <CardDescription>
-              Upload a file (e.g., PDF, image) to extract tables, lists, prices, and Bill of Quantities (BOQ).
+              Upload a file (e.g., PDF, image) to extract tables and Bill of Quantities (BOQ).
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -97,9 +102,23 @@ export default function Home() {
             </div>
             {isLoading && (
                 <div className="mt-4 w-full">
-                    <div className="h-2 w-full bg-primary/20 overflow-hidden rounded-full">
-                        <div className="h-full bg-primary animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                    <div className="relative h-2 w-full bg-primary/20 overflow-hidden rounded-full">
+                        <div 
+                            className="absolute top-0 right-full h-full w-full bg-primary animate-pulse" 
+                            style={{ animation: 'shimmer 2s infinite' }}
+                        ></div>
                     </div>
+                    <style jsx>{`
+                        @keyframes shimmer {
+                            0% { transform: translateX(-100%) scaleX(0.1); }
+                            50% { transform: translateX(0) scaleX(0.8); }
+                            100% { transform: translateX(100%) scaleX(0.1); }
+                        }
+                        .animate-pulse {
+                           animation-name: shimmer;
+                           animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+                        }
+                    `}</style>
                 </div>
             )}
              {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
@@ -137,11 +156,11 @@ export default function Home() {
               </Card>
             ))}
 
-            {extractedData.boqs?.map((boq, boqIndex) => (
-              <Card key={`boq-${boqIndex}`}>
+            {allBoqItems.length > 0 && (
+              <Card>
                 <CardHeader>
-                   <CardTitle>{boq.title || `Bill of Quantities ${boqIndex + 1}`}</CardTitle>
-                   {boq.description && <CardDescription>{boq.description}</CardDescription>}
+                   <CardTitle>Bill of Quantities</CardTitle>
+                   {extractedData.boqs?.[0]?.description && <CardDescription>{extractedData.boqs?.[0].description}</CardDescription>}
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -156,8 +175,8 @@ export default function Home() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {boq.items.map((item, itemIndex) => (
-                                <TableRow key={`boq-item-${boqIndex}-${itemIndex}`}>
+                            {allBoqItems.map((item, itemIndex) => (
+                                <TableRow key={`boq-item-${itemIndex}`}>
                                     <TableCell>{item.itemCode}</TableCell>
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
@@ -169,8 +188,22 @@ export default function Home() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                 <CardFooter className="flex flex-col items-end gap-2 p-6">
+                    <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="font-medium">{subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between w-full max-w-xs">
+                        <span className="text-muted-foreground">VAT (15%)</span>
+                        <span className="font-medium">{vatAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between w-full max-w-xs font-bold text-lg">
+                        <span>Grand Total</span>
+                        <span>{grandTotal.toFixed(2)}</span>
+                    </div>
+                </CardFooter>
               </Card>
-            ))}
+            )}
 
           </div>
         )}
