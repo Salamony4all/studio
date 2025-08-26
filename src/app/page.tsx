@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, DragEvent } from 'react';
+import { useState, useRef, type ChangeEvent, type DragEvent } from 'react';
 import { Loader2, FileUp, TableProperties, CircleX } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
