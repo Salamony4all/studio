@@ -9,10 +9,11 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
-import { Download, Loader2, FileText, UploadCloud } from 'lucide-react';
+import { Download, Loader2, FileText, UploadCloud, Image as ImageIcon } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Progress } from '@/components/ui/progress';
+import Image from 'next/image';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -192,10 +193,10 @@ export default function Home() {
     document.body.removeChild(link);
   }
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.pdf` : "Final_BOQ.pdf";
-    
+
     // Add Header
     doc.setFontSize(20);
     doc.text('Alshaya Enterprises', 14, 20);
@@ -210,15 +211,37 @@ export default function Home() {
     doc.text(`Contact Number: ${contactNumber}`, 14, 68);
 
     // Add Table
-    const tableColumn = ["Item", "Description", "Qty", "Unit", "Rate", "Amount"];
-    const tableRows = finalBoqItems.map(item => [
-        item.itemCode || '-',
-        item.description,
-        item.quantity,
-        item.unit,
-        item.rate?.toFixed(2) || '-',
-        item.amount?.toFixed(2) || '-'
-    ]);
+    const tableColumn = ["Item", "Image", "Description", "Qty", "Unit", "Rate", "Amount"];
+    
+    const tableRows = await Promise.all(finalBoqItems.map(async (item) => {
+        let imageCell: any = 'No image';
+        if (item.imageUrl) {
+            try {
+                const response = await fetch(item.imageUrl);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                await new Promise<void>((resolve, reject) => {
+                    reader.onload = () => {
+                        imageCell = { image: reader.result as string, width: 20, height: 20 };
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                console.error("Could not load image for PDF", e);
+            }
+        }
+        return [
+            item.itemCode || '-',
+            imageCell,
+            item.description,
+            item.quantity,
+            item.unit,
+            item.rate?.toFixed(2) || '-',
+            item.amount?.toFixed(2) || '-'
+        ];
+    }));
 
     doc.autoTable({
         startY: 75,
@@ -226,7 +249,15 @@ export default function Home() {
         body: tableRows,
         theme: 'striped',
         headStyles: { fillColor: [75, 85, 99] }, // gray-600
-        styles: { fontSize: 8 },
+        styles: { fontSize: 8, valign: 'middle' },
+        columnStyles: {
+            1: { cellWidth: 22 }, // Image column
+        },
+        didDrawCell: (data) => {
+            if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
+                doc.addImage(data.cell.raw.image, 'JPEG', data.cell.x + 2, data.cell.y + 2, data.cell.raw.width, data.cell.raw.height);
+            }
+        }
     });
 
     // Add Totals
@@ -370,6 +401,7 @@ export default function Home() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Image</TableHead>
                                 <TableHead>Item</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead className="text-right">Quantity</TableHead>
@@ -381,6 +413,15 @@ export default function Home() {
                         <TableBody>
                             {allBoqItems.map((item, itemIndex) => (
                                 <TableRow key={`boq-item-${itemIndex}`}>
+                                    <TableCell>
+                                        {item.imageUrl ? (
+                                            <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md" />
+                                        ) : (
+                                            <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
+                                                <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                            </div>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{item.itemCode}</TableCell>
                                     <TableCell>{item.description}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
@@ -454,6 +495,7 @@ export default function Home() {
                       <Table>
                           <TableHeader>
                               <TableRow>
+                                  <TableHead>Image</TableHead>
                                   <TableHead>Item</TableHead>
                                   <TableHead>Description</TableHead>
                                   <TableHead className="text-right">Quantity</TableHead>
@@ -465,6 +507,15 @@ export default function Home() {
                           <TableBody>
                               {finalBoqItems.map((item, itemIndex) => (
                                   <TableRow key={`final-boq-item-${itemIndex}`}>
+                                      <TableCell>
+                                          {item.imageUrl ? (
+                                              <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md" />
+                                          ) : (
+                                              <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
+                                                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                              </div>
+                                          )}
+                                      </TableCell>
                                       <TableCell>{item.itemCode}</TableCell>
                                       <TableCell>{item.description}</TableCell>
                                       <TableCell className="text-right">{item.quantity}</TableCell>
