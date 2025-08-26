@@ -23,6 +23,11 @@ export default function Home() {
   const [freight, setFreight] = useState(0);
   const [customs, setCustoms] = useState(0);
   const [installation, setInstallation] = useState(0);
+  
+  const [projectName, setProjectName] = useState('');
+  const [inchargePerson, setInchargePerson] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,11 +97,6 @@ export default function Home() {
   });
   
   const finalSubtotal = finalBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
-
-  const netMarginAmount = finalSubtotal - originalSubtotal;
-  const freightAmount = originalSubtotal * (freight / 100);
-  const customsAmount = originalSubtotal * (customs / 100);
-  const installationAmount = originalSubtotal * (installation / 100);
   
   const vatRate = 0.05; // 5% VAT
   const vatAmount = finalSubtotal * vatRate;
@@ -159,6 +159,33 @@ export default function Home() {
 
         {extractedData && (
           <div className="mt-8 space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Details</CardTitle>
+                <CardDescription>
+                  Enter the project and contact information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="project-name">Project Name</Label>
+                  <Input id="project-name" value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Enter project name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="incharge-person">Incharge Person</Label>
+                  <Input id="incharge-person" value={inchargePerson} onChange={(e) => setInchargePerson(e.target.value)} placeholder="Enter name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input id="company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Enter company name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact-number">Contact Number</Label>
+                  <Input id="contact-number" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="Enter contact number" />
+                </div>
+              </CardContent>
+            </Card>
+
             {extractedData.tables?.map((tableData, tableIndex) => (
               <Card key={`table-${tableIndex}`}>
                 <CardHeader>
