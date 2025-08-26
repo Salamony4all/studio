@@ -9,9 +9,10 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
-import { Download, Loader2, FileText } from 'lucide-react';
+import { Download, Loader2, FileText, UploadCloud } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Progress } from '@/components/ui/progress';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -24,6 +25,7 @@ export default function Home() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const [showFinalBoq, setShowFinalBoq] = useState(false);
 
@@ -42,6 +44,36 @@ export default function Home() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
+      setError(null);
+      setExtractedData(null);
+      setShowFinalBoq(false);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      setFile(droppedFile);
       setError(null);
       setExtractedData(null);
       setShowFinalBoq(false);
@@ -223,42 +255,47 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                type="file"
-                onChange={handleFileChange}
-                className="flex-grow file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
-              <Button onClick={handleExtract} disabled={isLoading || !file} className="w-full sm:w-auto">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Extracting...
-                  </>
-                ) : (
-                  'Extract Data'
-                )}
-              </Button>
+          <div 
+            className={`relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg transition-colors duration-200 ease-in-out ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <UploadCloud className="w-12 h-12 text-muted-foreground mb-4" />
+            <p className="text-center text-muted-foreground">
+              <label htmlFor="file-upload" className="font-medium text-primary cursor-pointer hover:underline">
+                Click to upload
+              </label> or drag and drop a file
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">PDF, PNG, JPG accepted</p>
+            <Input id="file-upload" type="file" className="absolute w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} />
+          </div>
+            {file && !isLoading && (
+              <div className="mt-4 p-4 border rounded-md flex items-center justify-between bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-medium">{file.name}</span>
+                </div>
+                <Button onClick={() => setFile(null)} variant="ghost" size="sm">Remove</Button>
+              </div>
+            )}
+             <div className="mt-4">
+              <Button onClick={handleExtract} disabled={isLoading || !file} className="w-full">
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Extracting Data...
+                    </>
+                  ) : (
+                    'Extract Data'
+                  )}
+                </Button>
             </div>
             {isLoading && (
-                <div className="mt-4 w-full">
-                    <div className="relative h-2 w-full bg-primary/20 overflow-hidden rounded-full">
-                        <div 
-                            className="absolute top-0 right-full h-full w-full bg-primary animate-pulse" 
-                            style={{ animation: 'shimmer 2s infinite' }}
-                        ></div>
-                    </div>
-                    <style jsx>{`
-                        @keyframes shimmer {
-                            0% { transform: translateX(-100%) scaleX(0.1); }
-                            50% { transform: translateX(0) scaleX(0.8); }
-                            100% { transform: translateX(100%) scaleX(0.1); }
-                        }
-                        .animate-pulse {
-                           animation-name: shimmer;
-                           animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
-                        }
-                    `}</style>
+                <div className="mt-4 w-full space-y-2">
+                    <Progress />
+                    <p className="text-sm text-center text-muted-foreground animate-pulse">Analyzing your document...</p>
                 </div>
             )}
              {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
