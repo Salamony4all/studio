@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { extractData } from './actions';
 import type { ExtractedData } from '@/ai/flows/extract-data-flow';
-import { Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -101,6 +101,56 @@ export default function Home() {
   const vatRate = 0.05; // 5% VAT
   const vatAmount = finalSubtotal * vatRate;
   const grandTotal = finalSubtotal + vatAmount;
+
+  const handleExport = () => {
+    const escapeCsvCell = (cell: any) => {
+        const cellStr = String(cell ?? '').trim();
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+    };
+
+    const headers = ['Item', 'Description', 'Quantity', 'Unit', 'New Rate', 'New Amount'];
+    const rows = finalBoqItems.map(item => [
+        item.itemCode,
+        item.description,
+        item.quantity,
+        item.unit,
+        item.rate?.toFixed(2) || '0.00',
+        item.amount?.toFixed(2) || '0.00'
+    ]);
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    // Project Details
+    csvContent += `Project Name,${escapeCsvCell(projectName)}\n`;
+    csvContent += `Incharge Person,${escapeCsvCell(inchargePerson)}\n`;
+    csvContent += `Company Name,${escapeCsvCell(companyName)}\n`;
+    csvContent += `Contact Number,${escapeCsvCell(contactNumber)}\n`;
+    csvContent += '\n';
+
+    // Table
+    csvContent += headers.map(escapeCsvCell).join(',') + '\n';
+    rows.forEach(row => {
+        csvContent += row.map(escapeCsvCell).join(',') + '\n';
+    });
+
+    // Totals
+    csvContent += '\n';
+    csvContent += `,,,,Subtotal,${finalSubtotal.toFixed(2)}\n`;
+    csvContent += `,,,,VAT (${vatRate * 100}%),${vatAmount.toFixed(2)}\n`;
+    csvContent += `,,,,Grand Total,${grandTotal.toFixed(2)}\n`;
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const fileName = projectName ? `${projectName.replace(/\s+/g, '_')}_BOQ.csv` : "Final_BOQ.csv";
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
@@ -299,52 +349,66 @@ export default function Home() {
             )}
 
             {showFinalBoq && allBoqItems.length > 0 && (
-              <Card>
-                <CardHeader>
-                   <CardTitle>Final Bill of Quantities</CardTitle>
-                   <CardDescription>This BOQ includes the additional costs and margins you specified, distributed across each item.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead>Unit</TableHead>
-                                <TableHead className="text-right">New Rate</TableHead>
-                                <TableHead className="text-right">New Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {finalBoqItems.map((item, itemIndex) => (
-                                <TableRow key={`final-boq-item-${itemIndex}`}>
-                                    <TableCell>{item.itemCode}</TableCell>
-                                    <TableCell>{item.description}</TableCell>
-                                    <TableCell className="text-right">{item.quantity}</TableCell>
-                                    <TableCell>{item.unit}</TableCell>
-                                    <TableCell className="text-right">{item.rate?.toFixed(2) || '-'}</TableCell>
-                                    <TableCell className="text-right">{item.amount?.toFixed(2) || '-'}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-                 <CardFooter className="flex flex-col items-end gap-2 p-6">
-                    <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span className="font-medium">{finalSubtotal.toFixed(2)}</span>
-                    </div>
-                     <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">VAT ({vatRate * 100}%)</span>
-                        <span className="font-medium">{vatAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between w-full max-w-xs font-bold text-lg border-t pt-2 mt-2">
-                        <span>Grand Total</span>
-                        <span>{grandTotal.toFixed(2)}</span>
-                    </div>
-                </CardFooter>
-              </Card>
+              <>
+                <Card>
+                  <CardHeader>
+                     <CardTitle>Final Bill of Quantities</CardTitle>
+                     <CardDescription>This BOQ includes the additional costs and margins you specified, distributed across each item.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Table>
+                          <TableHeader>
+                              <TableRow>
+                                  <TableHead>Item</TableHead>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead className="text-right">Quantity</TableHead>
+                                  <TableHead>Unit</TableHead>
+                                  <TableHead className="text-right">New Rate</TableHead>
+                                  <TableHead className="text-right">New Amount</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {finalBoqItems.map((item, itemIndex) => (
+                                  <TableRow key={`final-boq-item-${itemIndex}`}>
+                                      <TableCell>{item.itemCode}</TableCell>
+                                      <TableCell>{item.description}</TableCell>
+                                      <TableCell className="text-right">{item.quantity}</TableCell>
+                                      <TableCell>{item.unit}</TableCell>
+                                      <TableCell className="text-right">{item.rate?.toFixed(2) || '-'}</TableCell>
+                                      <TableCell className="text-right">{item.amount?.toFixed(2) || '-'}</TableCell>
+                                  </TableRow>
+                              ))}
+                          </TableBody>
+                      </Table>
+                  </CardContent>
+                   <CardFooter className="flex flex-col items-end gap-2 p-6">
+                      <div className="flex justify-between w-full max-w-xs">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="font-medium">{finalSubtotal.toFixed(2)}</span>
+                      </div>
+                       <div className="flex justify-between w-full max-w-xs">
+                          <span className="text-muted-foreground">VAT ({vatRate * 100}%)</span>
+                          <span className="font-medium">{vatAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between w-full max-w-xs font-bold text-lg border-t pt-2 mt-2">
+                          <span>Grand Total</span>
+                          <span>{grandTotal.toFixed(2)}</span>
+                      </div>
+                  </CardFooter>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Export</CardTitle>
+                        <CardDescription>Download the final Bill of Quantities.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button onClick={handleExport}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export as CSV
+                        </Button>
+                    </CardContent>
+                </Card>
+              </>
             )}
           </div>
         )}
