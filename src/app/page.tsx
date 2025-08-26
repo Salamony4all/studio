@@ -77,18 +77,30 @@ export default function Home() {
   };
 
   const allBoqItems = extractedData?.boqs?.flatMap(boq => boq.items) || [];
-  const subtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
+  const originalSubtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
   
-  const netMarginAmount = subtotal * (netMargin / 100);
-  const freightAmount = subtotal * (freight / 100);
-  const customsAmount = subtotal * (customs / 100);
-  const installationAmount = subtotal * (installation / 100);
+  const costIncreaseFactor = (1 + netMargin / 100 + freight / 100 + customs / 100 + installation / 100);
 
-  const totalBeforeVat = subtotal + netMarginAmount + freightAmount + customsAmount + installationAmount;
+  const finalBoqItems = allBoqItems.map(item => {
+    const newRate = (item.rate || 0) * costIncreaseFactor;
+    const newAmount = item.quantity * newRate;
+    return {
+      ...item,
+      rate: newRate,
+      amount: newAmount,
+    };
+  });
+  
+  const finalSubtotal = finalBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
+
+  const netMarginAmount = finalSubtotal - originalSubtotal;
+  const freightAmount = originalSubtotal * (freight / 100);
+  const customsAmount = originalSubtotal * (customs / 100);
+  const installationAmount = originalSubtotal * (installation / 100);
   
   const vatRate = 0.15; // 15% VAT
-  const vatAmount = totalBeforeVat * vatRate;
-  const grandTotal = totalBeforeVat + vatAmount;
+  const vatAmount = finalSubtotal * vatRate;
+  const grandTotal = finalSubtotal + vatAmount;
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
@@ -211,7 +223,7 @@ export default function Home() {
                  <CardFooter className="flex flex-col items-end gap-2 p-6">
                     <div className="flex justify-between w-full max-w-xs font-bold text-lg border-t pt-2 mt-2">
                         <span>Subtotal</span>
-                        <span>{subtotal.toFixed(2)}</span>
+                        <span>{originalSubtotal.toFixed(2)}</span>
                     </div>
                 </CardFooter>
               </Card>
@@ -263,7 +275,7 @@ export default function Home() {
               <Card>
                 <CardHeader>
                    <CardTitle>Final Bill of Quantities</CardTitle>
-                   <CardDescription>This BOQ includes the additional costs and margins you specified.</CardDescription>
+                   <CardDescription>This BOQ includes the additional costs and margins you specified, distributed across each item.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -273,12 +285,12 @@ export default function Home() {
                                 <TableHead>Description</TableHead>
                                 <TableHead className="text-right">Quantity</TableHead>
                                 <TableHead>Unit</TableHead>
-                                <TableHead className="text-right">Rate</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead className="text-right">New Rate</TableHead>
+                                <TableHead className="text-right">New Amount</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {allBoqItems.map((item, itemIndex) => (
+                            {finalBoqItems.map((item, itemIndex) => (
                                 <TableRow key={`final-boq-item-${itemIndex}`}>
                                     <TableCell>{item.itemCode}</TableCell>
                                     <TableCell>{item.description}</TableCell>
@@ -294,25 +306,9 @@ export default function Home() {
                  <CardFooter className="flex flex-col items-end gap-2 p-6">
                     <div className="flex justify-between w-full max-w-xs">
                         <span className="text-muted-foreground">Subtotal</span>
-                        <span className="font-medium">{subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">Net Margin ({netMargin}%)</span>
-                        <span className="font-medium">{netMarginAmount.toFixed(2)}</span>
+                        <span className="font-medium">{finalSubtotal.toFixed(2)}</span>
                     </div>
                      <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">Freight ({freight}%)</span>
-                        <span className="font-medium">{freightAmount.toFixed(2)}</span>
-                    </div>
-                     <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">Customs ({customs}%)</span>
-                        <span className="font-medium">{customsAmount.toFixed(2)}</span>
-                    </div>
-                     <div className="flex justify-between w-full max-w-xs">
-                        <span className="text-muted-foreground">Installation ({installation}%)</span>
-                        <span className="font-medium">{installationAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between w-full max-w-xs">
                         <span className="text-muted-foreground">VAT ({vatRate * 100}%)</span>
                         <span className="font-medium">{vatAmount.toFixed(2)}</span>
                     </div>
