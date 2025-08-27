@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -257,17 +258,15 @@ export default function Home() {
       styles: { fontSize: 8, valign: 'middle' },
       columnStyles: {
           0: { cellWidth: 8 }, // Sn column
-          1: { cellWidth: 22 }, // Image column
+          1: { cellWidth: 22, minCellHeight: 22 }, // Image column
       },
       willDrawCell: (data) => {
         if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-            const img = new (window as any).Image();
+            const img = new window.Image();
             img.src = data.cell.raw.image;
             img.onload = () => {
               const aspectRatio = img.width / img.height;
-              const imageWidth = data.cell.width - 4; // padding
-              const imageHeight = imageWidth / aspectRatio;
-              // Dynamically set row height to avoid image distortion
+              const imageHeight = (data.cell.width - 4) / aspectRatio;
               if (data.row.height < imageHeight) {
                 data.row.height = imageHeight + 4;
               }
@@ -276,40 +275,30 @@ export default function Home() {
       },
       didDrawCell: (data) => {
           if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-              const img = new (window as any).Image();
-              img.src = data.cell.raw.image;
-              img.onload = () => {
-                  try {
-                      const cellWidth = data.cell.width - 4;
-                      const cellHeight = data.cell.height - 4;
-                      
-                      const aspect = img.width / img.height;
-                      let imgWidth = cellWidth;
-                      let imgHeight = imgWidth / aspect;
-
-                      if (imgHeight > cellHeight) {
-                          imgHeight = cellHeight;
-                          imgWidth = imgHeight * aspect;
-                      }
-
-                      const x = data.cell.x + (cellWidth - imgWidth) / 2 + 2;
-                      const y = data.cell.y + (cellHeight - imgHeight) / 2 + 2;
-
-                      if (x && y && imgWidth && imgHeight) {
-                          const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                          doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
-                      }
+              try {
+                  const img = new window.Image();
+                  img.src = data.cell.raw.image;
                   
-                  } catch(e) {
-                      console.error("Failed to add image to PDF:", e);
-                      const x = data.cell.x + 2;
-                      const y = data.cell.y + 2;
-                      doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
-                      doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
+                  const cellWidth = data.cell.width - 4;
+                  const cellHeight = data.cell.height - 4;
+                  
+                  const aspect = img.width / img.height;
+                  let imgWidth = cellWidth;
+                  let imgHeight = imgWidth / aspect;
+
+                  if (imgHeight > cellHeight) {
+                      imgHeight = cellHeight;
+                      imgWidth = imgHeight * aspect;
                   }
-              }
-              img.onerror = () => {
-                  console.error("Failed to load image for PDF cell");
+
+                  const x = data.cell.x + (data.cell.width - imgWidth) / 2;
+                  const y = data.cell.y + (data.cell.height - imgHeight) / 2;
+                  
+                  const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                  doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
+              
+              } catch(e) {
+                  console.error("Failed to add image to PDF:", e);
                   const x = data.cell.x + 2;
                   const y = data.cell.y + 2;
                   doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
