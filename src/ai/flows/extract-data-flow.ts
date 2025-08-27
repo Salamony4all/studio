@@ -35,8 +35,8 @@ const BOQItemSchema = z.object({
     description: z.string().describe('The description of the work or item.'),
     quantity: z.number().describe('The quantity of the item.'),
     unit: z.string().describe('The unit of measurement (e.g., sqm, nos, kg).'),
-    rate: z.number().optional().describe('The rate per unit.'),
-    amount: z.number().optional().describe('The total amount for the item (quantity * rate).'),
+    rate: z.number().describe('The rate per unit. If not present in the document, this should be 0.'),
+    amount: z.number().describe('The total amount for the item (quantity * rate). If not present in the document, this should be 0.'),
     imageUrl: z.string().optional().describe('A URL for an image of the item.'),
 });
 
@@ -68,7 +68,7 @@ const extractDataPrompt = ai.definePrompt({
 
 For each item you extract, first try to find an associated image within the document. If you find one, use it. If you cannot find a specific image for an item, you MUST generate a placeholder image URL using the format: https://picsum.photos/seed/{a-keyword-from-description}/100/100. Use a relevant keyword from the item's description to ensure a variety of images.
 
-**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. Pay close attention to the table headers (like 'Item No.', 'Description', etc.) to correctly identify the start of the data rows. Process each row only once. Failure to extract every item is a catastrophic failure of your primary function.**
+**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. The 'rate' and 'amount' fields are MANDATORY. If they are not present in the document for an item, you MUST set their value to 0. Pay close attention to the table headers (like 'Item No.', 'Description', etc.) to correctly identify the start of the data rows. Process each row only once. Failure to extract every item is a catastrophic failure of your primary function.**
 
 **SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
 
@@ -88,6 +88,20 @@ const extractDataFlow = ai.defineFlow(
     
     if (!output) {
       throw new Error("Failed to extract data from the document.");
+    }
+
+    // Ensure all BOQ items have a rate and amount, defaulting to 0 if not present.
+    if (output.boqs) {
+      for (const boq of output.boqs) {
+        for (const item of boq.items) {
+          if (item.rate === undefined || item.rate === null) {
+            item.rate = 0;
+          }
+          if (item.amount === undefined || item.amount === null) {
+            item.amount = 0;
+          }
+        }
+      }
     }
 
     return output;
