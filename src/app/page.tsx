@@ -36,6 +36,7 @@ export default function Home() {
   const [freight, setFreight] = useState(0);
   const [customs, setCustoms] = useState(0);
   const [installation, setInstallation] = useState(0);
+  const [quantityUpscale, setQuantityUpscale] = useState(0);
   
   const [projectName, setProjectName] = useState('');
   const [contactPerson, setContactPerson] = useState('');
@@ -156,12 +157,16 @@ export default function Home() {
   const originalSubtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
   
   const costIncreaseFactor = (1 + netMargin / 100 + freight / 100 + customs / 100 + installation / 100);
+  const quantityMultiplier = 1 + quantityUpscale;
+
 
   const finalBoqItems = allBoqItems.map(item => {
     const newRate = (item.rate || 0) * costIncreaseFactor;
-    const newAmount = item.quantity * newRate;
+    const newQuantity = item.quantity * quantityMultiplier;
+    const newAmount = newQuantity * newRate;
     return {
       ...item,
+      quantity: newQuantity,
       rate: newRate,
       amount: newAmount,
     };
@@ -591,7 +596,7 @@ export default function Home() {
                         <CardTitle>Cost &amp; Margin Preferences</CardTitle>
                         <CardDescription>Adjust the sliders to set your preferences for additional costs and margins.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid sm:grid-cols-2 gap-6">
+                    <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                          <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <Label htmlFor="net-margin">Net Margin</Label>
@@ -619,6 +624,13 @@ export default function Home() {
                                 <span className="text-sm font-medium">{installation}%</span>
                             </div>
                             <Slider id="installation" value={[installation]} onValueChange={([v]) => setInstallation(v)} max={100} step={1} />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+                             <div className="flex justify-between items-center">
+                                <Label htmlFor="quantity-upscale">Quantity Upscale</Label>
+                                <span className="text-sm font-medium">{quantityUpscale > 0 ? '+' : ''}{quantityUpscale}x</span>
+                            </div>
+                            <Slider id="quantity-upscale" value={[quantityUpscale]} onValueChange={([v]) => setQuantityUpscale(v)} min={-10} max={10} step={1} />
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end">
@@ -663,7 +675,7 @@ export default function Home() {
                                       </TableCell>
                                       <TableCell>{item.itemCode}</TableCell>
                                       <TableCell>{item.description}</TableCell>
-                                      <TableCell className="text-right">{item.quantity}</TableCell>
+                                      <TableCell className="text-right">{item.quantity.toFixed(2)}</TableCell>
                                       <TableCell>{item.unit}</TableCell>
                                       <TableCell className="text-right">{item.rate?.toFixed(2) || '-'}</TableCell>
                                       <TableCell className="text-right">{item.amount?.toFixed(2) || '-'}</TableCell>
