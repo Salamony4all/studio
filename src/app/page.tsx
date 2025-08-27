@@ -331,7 +331,7 @@ export default function Home() {
     });
 
     // Add Totals
-    const finalY = (doc as any).autoTable.previous.finalY;
+    let finalY = (doc as any).autoTable.previous.finalY;
     const rightAlign = doc.internal.pageSize.width - 14;
     doc.setFontSize(10);
     doc.text(`Subtotal: ${finalSubtotal.toFixed(2)}`, rightAlign, finalY + 10, { align: 'right' });
@@ -339,6 +339,72 @@ export default function Home() {
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, rightAlign, finalY + 22, { align: 'right' });
+    
+    finalY += 30;
+
+    // Add Footer
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    
+    const footerLines = [
+        "Regards",
+        "Mohamed Abdelsalam",
+        "Sr.Sales Consultant",
+        "Oman 70 Building , Al-Ghubra, ",
+        "P.O Box 135 , Postal Code 103, Muscat, Oman.",
+        "Alshaya Enterprises®",
+        "",
+        "Phone: (+968) : (+968) 24501943 Ext. 6004",
+        "Mobile: (+968) 98901384 - 93319809",
+        "www.alshayaenterprises.com",
+        "www.facebook.com/AlshayaEnterprises/ | www.instagram.com/alshayaenterprises/",
+    ];
+
+    doc.setFont(undefined, 'bold');
+    doc.text("Regards", 14, finalY);
+    finalY += 5;
+    doc.setFont(undefined, 'normal');
+    doc.text("Mohamed Abdelsalam", 14, finalY);
+    finalY += 5;
+    doc.text("Sr.Sales Consultant", 14, finalY);
+    finalY += 5;
+    doc.text("Oman 70 Building , Al-Ghubra,", 14, finalY);
+    finalY += 5;
+    doc.text("P.O Box 135 , Postal Code 103, Muscat, Oman.", 14, finalY);
+    finalY += 5;
+    doc.setFont(undefined, 'bold');
+    doc.text("Alshaya Enterprises®", 14, finalY);
+    finalY += 10;
+    doc.setFont(undefined, 'normal');
+    doc.text("Phone: (+968) : (+968) 24501943 Ext. 6004", 14, finalY);
+    finalY += 5;
+    doc.text("Mobile: (+968) 98901384 - 93319809", 14, finalY);
+    finalY += 5;
+    
+    doc.setTextColor(67, 58, 183); // Primary color for links
+    doc.textWithLink("www.alshayaenterprises.com", 14, finalY, { url: "http://www.alshayaenterprises.com" });
+    finalY += 5;
+
+    const facebookX = 14;
+    doc.textWithLink("www.facebook.com/AlshayaEnterprises/", facebookX, finalY, { url: "http://www.facebook.com/AlshayaEnterprises/" });
+    const facebookWidth = doc.getTextWidth("www.facebook.com/AlshayaEnterprises/");
+    
+    doc.setTextColor(0, 0, 0); // Reset color to black
+    doc.text("|", facebookX + facebookWidth + 2, finalY);
+
+    doc.setTextColor(67, 58, 183); // Primary color for links
+    const instagramX = facebookX + facebookWidth + 5;
+    doc.textWithLink("www.instagram.com/alshayaenterprises/", instagramX, finalY, { url: "http://www.instagram.com/alshayaenterprises/" });
+
+    doc.setTextColor(0, 0, 0); // Reset color to black
+    finalY += 10;
+
+    const disclaimer = "Disclaimer: This communication doesn’t constitute any binding commitment on behalf of our company and is subject to contract and final board approval in accordance with our internal procedures.";
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    const splitDisclaimer = doc.splitTextToSize(disclaimer, doc.internal.pageSize.width - 28);
+    doc.text(splitDisclaimer, 14, finalY);
+
 
     const pdfDataUri = doc.output('datauristring');
     setPdfPreviewUrl(pdfDataUri);
