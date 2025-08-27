@@ -16,6 +16,7 @@ import 'jspdf-autotable';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { format } from 'date-fns';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -42,10 +43,34 @@ export default function Home() {
   const [contactPerson, setContactPerson] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [projectDate, setProjectDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [referenceNumber, setReferenceNumber] = useState('');
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [imageUris, setImageUris] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(word => word.charAt(0))
+            .join('')
+            .toUpperCase();
+    };
+
+    const generateReferenceNumber = () => {
+        const aeInitials = 'AE';
+        const projectInitials = getInitials(projectName);
+        const companyInitials = getInitials(companyName);
+        const datePart = format(new Date(projectDate), 'ddMMyy');
+
+        const parts = [aeInitials, projectInitials, companyInitials, datePart].filter(part => part);
+        setReferenceNumber(parts.join('-'));
+    };
+
+    generateReferenceNumber();
+  }, [projectName, companyName, projectDate]);
 
 
   useEffect(() => {
@@ -157,7 +182,7 @@ export default function Home() {
   const originalSubtotal = allBoqItems.reduce((acc, item) => acc + (item.amount || 0), 0);
   
   const costIncreaseFactor = (1 + netMargin / 100 + freight / 100 + customs / 100 + installation / 100);
-  const quantityMultiplier = 1 + quantityUpscale;
+  const quantityMultiplier = (1 + quantityUpscale / 10);
 
 
   const finalBoqItems = allBoqItems.map(item => {
@@ -205,6 +230,8 @@ export default function Home() {
     csvContent += `Contact Person,${escapeCsvCell(contactPerson)}\n`;
     csvContent += `Company Name,${escapeCsvCell(companyName)}\n`;
     csvContent += `Contact Number,${escapeCsvCell(contactNumber)}\n`;
+    csvContent += `Date,${escapeCsvCell(projectDate)}\n`;
+    csvContent += `Reference Number,${escapeCsvCell(referenceNumber)}\n`;
     csvContent += '\n';
 
     // Table
@@ -248,16 +275,35 @@ export default function Home() {
     doc.text(`Contact Person: ${contactPerson}`, 14, 61);
     doc.text(`Company Name: ${companyName}`, 14, 67);
     doc.text(`Contact Number: ${contactNumber}`, 14, 73);
+    doc.text(`Date: ${projectDate}`, 120, 55);
+    doc.text(`Reference No: ${referenceNumber}`, 120, 61);
+
 
     // Add Table
     const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "Rate", "Amount"];
     
-    const tableRows = finalBoqItems.map((item, index) => {
-        let imageCell: any = 'No image';
+    const tableRowsPromises = finalBoqItems.map(async (item, index) => {
+        let imageCell: any = ' ';
         if (item.imageUrl) {
             let imageDataUri = item.imageUrl.startsWith('http') ? imageUris[item.imageUrl] : item.imageUrl;
+            if(!imageDataUri && item.imageUrl.startsWith('http')) {
+                imageDataUri = await getImageAsDataUri(item.imageUrl);
+            }
             if(imageDataUri) {
-                imageCell = { image: imageDataUri, width: 20 };
+                 try {
+                    // Test if image data is valid
+                    const img = new window.Image();
+                    img.src = imageDataUri;
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                    });
+                    const imgFormat = imageDataUri.substring(imageDataUri.indexOf('/') + 1, imageDataUri.indexOf(';'));
+                    imageCell = { image: imageDataUri, format: imgFormat.toUpperCase(), width: 20 };
+                } catch (e) {
+                    console.error("Skipping invalid image for PDF:", item.imageUrl);
+                    imageCell = ' ';
+                }
             }
         }
         return [
@@ -272,6 +318,9 @@ export default function Home() {
         ];
     });
 
+    const tableRows = await Promise.all(tableRowsPromises);
+
+
     doc.autoTable({
       startY: 80,
       head: [tableColumn],
@@ -283,25 +332,12 @@ export default function Home() {
           0: { cellWidth: 8 }, // Sn column
           1: { cellWidth: 22, minCellHeight: 22 }, // Image column
       },
-      willDrawCell: (data) => {
-        if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-            const img = new window.Image();
-            img.src = data.cell.raw.image;
-            img.onload = () => {
-              const aspectRatio = img.width / img.height;
-              let imageHeight = (data.cell.width - 4) / aspectRatio;
-              if (data.row.height < imageHeight) {
-                data.row.height = imageHeight + 4;
-              }
-            }
-        }
-      },
       didDrawCell: (data) => {
           if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-              const img = new window.Image();
-              img.src = data.cell.raw.image;
-              img.onload = () => {
                 try {
+                    const img = new window.Image();
+                    img.src = data.cell.raw.image;
+                    
                     const cellWidth = data.cell.width - 4;
                     const cellHeight = data.cell.height - 4;
                     
@@ -317,8 +353,7 @@ export default function Home() {
                     const x = data.cell.x + (data.cell.width - imgWidth) / 2;
                     const y = data.cell.y + (data.cell.height - imgHeight) / 2;
                     
-                    const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                    doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
+                    doc.addImage(data.cell.raw.image, data.cell.raw.format, x, y, imgWidth, imgHeight);
                 
                 } catch(e) {
                     console.error("Failed to add image to PDF:", e);
@@ -327,14 +362,6 @@ export default function Home() {
                     doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
                     doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
                 }
-              };
-              img.onerror = () => {
-                console.error("Failed to load image for PDF");
-                const x = data.cell.x + 2;
-                const y = data.cell.y + 2;
-                doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
-                doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
-              }
           }
       },
     });
@@ -352,6 +379,11 @@ export default function Home() {
     finalY += 30;
 
     // Add Footer
+    if(finalY > doc.internal.pageSize.height - 80) {
+        doc.addPage();
+        finalY = 20;
+    }
+
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
@@ -504,6 +536,14 @@ export default function Home() {
                 <div className="space-y-2">
                   <Label htmlFor="contact-number">Contact Number</Label>
                   <Input id="contact-number" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="Enter contact number" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <Input id="date" type="date" value={projectDate} onChange={(e) => setProjectDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="reference-number">Reference Number</Label>
+                    <Input id="reference-number" value={referenceNumber} readOnly disabled />
                 </div>
               </CardContent>
             </Card>
@@ -765,3 +805,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
