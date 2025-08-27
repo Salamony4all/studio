@@ -15,6 +15,7 @@ import 'jspdf-autotable';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { alshayaLogoDataUri } from '@/lib/logo';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -202,20 +203,21 @@ export default function Home() {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     
     // Add Header
+    doc.addImage(alshayaLogoDataUri, 'PNG', 14, 15, 30, 10);
     doc.setFontSize(20);
     doc.setFont(undefined, 'bold');
-    doc.text('Alshaya Enterprise™', 14, 20);
+    doc.text('Alshaya Enterprise™', 14, 32);
     doc.setFont(undefined, 'normal');
 
 
     // Add Project Details
     doc.setFontSize(16);
-    doc.text('Bill of Quantities', 14, 40);
+    doc.text('Bill of Quantities', 14, 45);
     doc.setFontSize(12);
-    doc.text(`Project Name: ${projectName}`, 14, 50);
-    doc.text(`Incharge Person: ${inchargePerson}`, 14, 56);
-    doc.text(`Company Name: ${companyName}`, 14, 62);
-    doc.text(`Contact Number: ${contactNumber}`, 14, 68);
+    doc.text(`Project Name: ${projectName}`, 14, 55);
+    doc.text(`Incharge Person: ${inchargePerson}`, 14, 61);
+    doc.text(`Company Name: ${companyName}`, 14, 67);
+    doc.text(`Contact Number: ${contactNumber}`, 14, 73);
 
     // Add Table
     const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "New Rate", "New Amount"];
@@ -247,7 +249,7 @@ export default function Home() {
     }));
 
     doc.autoTable({
-      startY: 75,
+      startY: 80,
       head: [tableColumn],
       body: tableRows,
       theme: 'striped',
@@ -348,7 +350,8 @@ export default function Home() {
     <div className="flex flex-col items-center justify-start min-h-screen p-4 sm:p-8 bg-background">
       <div className="w-full max-w-4xl">
         <Card className="w-full">
-          <CardHeader>
+          <CardHeader className="items-center text-center">
+            <Image src={alshayaLogoDataUri} alt="Alshaya Enterprise Logo" width={80} height={40} />
             <CardTitle className="text-2xl font-bold tracking-tight">
               Estimation Pro
             </CardTitle>
