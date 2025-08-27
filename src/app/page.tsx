@@ -260,13 +260,15 @@ export default function Home() {
     setIsPdfGenerating(true);
     const doc = new jsPDF() as jsPDFWithAutoTable;
     
-    // Add Header
-    doc.setFontSize(20);
-    doc.setFont(undefined, 'bold');
-    doc.text('Alshaya Enterprise™', 14, 20);
-    doc.setFont(undefined, 'normal');
+    const addHeader = () => {
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.text('Alshaya Enterprise™', 14, 20);
+      doc.setFont(undefined, 'normal');
+    };
 
-
+    addHeader();
+    
     // Add Project Details
     doc.setFontSize(16);
     doc.text('Bill of Quantities', 14, 45);
@@ -296,12 +298,12 @@ export default function Home() {
                     img.src = imageDataUri;
                     await new Promise((resolve, reject) => {
                         img.onload = resolve;
-                        img.onerror = reject;
+                        img.onerror = () => reject(new Error('Image failed to load'));
                     });
                     const imgFormat = imageDataUri.substring(imageDataUri.indexOf('/') + 1, imageDataUri.indexOf(';'));
-                    imageCell = { image: imageDataUri, format: imgFormat.toUpperCase(), width: 20 };
+                    imageCell = { image: imageDataUri, format: imgFormat.toUpperCase(), width: 20, height: 20 };
                 } catch (e) {
-                    console.error("Skipping invalid image for PDF:", item.imageUrl);
+                    console.error("Skipping invalid image for PDF:", item.imageUrl, e);
                     imageCell = ' ';
                 }
             }
@@ -332,16 +334,19 @@ export default function Home() {
           0: { cellWidth: 8 }, // Sn column
           1: { cellWidth: 22, minCellHeight: 22 }, // Image column
       },
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) {
+            addHeader();
+        }
+      },
       didDrawCell: (data) => {
           if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
                 try {
-                    const img = new window.Image();
-                    img.src = data.cell.raw.image;
-                    
+                    const imgData = data.cell.raw;
                     const cellWidth = data.cell.width - 4;
                     const cellHeight = data.cell.height - 4;
                     
-                    const aspect = img.width / img.height;
+                    const aspect = imgData.width / imgData.height;
                     let imgWidth = cellWidth;
                     let imgHeight = imgWidth / aspect;
 
@@ -353,7 +358,7 @@ export default function Home() {
                     const x = data.cell.x + (data.cell.width - imgWidth) / 2;
                     const y = data.cell.y + (data.cell.height - imgHeight) / 2;
                     
-                    doc.addImage(data.cell.raw.image, data.cell.raw.format, x, y, imgWidth, imgHeight);
+                    doc.addImage(imgData.image, imgData.format, x, y, imgWidth, imgHeight);
                 
                 } catch(e) {
                     console.error("Failed to add image to PDF:", e);
@@ -752,7 +757,7 @@ export default function Home() {
                         <Button 
                             onClick={handleExportPdf} 
                             variant="outline" 
-                            disabled={isPdfGenerating}
+                            disabled={isPdfGenerating || !projectName || !contactPerson || !companyName || !contactNumber}
                         >
                             {isPdfGenerating ? (
                                 <>
