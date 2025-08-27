@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,31 @@ export default function Home() {
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [imageUris, setImageUris] = useState<Record<string, string>>({});
+
+
+  useEffect(() => {
+    const fetchImageUris = async () => {
+        if (extractedData?.boqs) {
+            const allItems = extractedData.boqs.flatMap(boq => boq.items);
+            const urlsToFetch = allItems
+                .map(item => item.imageUrl)
+                .filter((url): url is string => !!url && url.startsWith('http') && !imageUris[url]);
+
+            if (urlsToFetch.length > 0) {
+                const newImageUris: Record<string, string> = {};
+                await Promise.all(urlsToFetch.map(async (url) => {
+                    const dataUri = await getImageAsDataUri(url);
+                    newImageUris[url] = dataUri;
+                }));
+                setImageUris(prev => ({...prev, ...newImageUris}));
+            }
+        }
+    };
+    fetchImageUris();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extractedData]);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -95,6 +120,7 @@ export default function Home() {
     setError(null);
     setExtractedData(null);
     setShowFinalBoq(false);
+    setImageUris({});
 
     try {
       const reader = new FileReader();
@@ -221,16 +247,14 @@ export default function Home() {
     // Add Table
     const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "Rate", "Amount"];
     
-    const tableRows = await Promise.all(finalBoqItems.map(async (item, index) => {
+    const tableRows = finalBoqItems.map((item, index) => {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
             try {
-                let imageDataUri = item.imageUrl;
-                // If the imageUrl is a web URL, fetch it and convert to data URI
-                if (item.imageUrl.startsWith('http')) {
-                    imageDataUri = await getImageAsDataUri(item.imageUrl);
+                let imageDataUri = item.imageUrl.startsWith('http') ? imageUris[item.imageUrl] : item.imageUrl;
+                if(imageDataUri) {
+                    imageCell = { image: imageDataUri, width: 20 };
                 }
-                imageCell = { image: imageDataUri, width: 20 };
             } catch (e) {
                 console.error("Could not load image for PDF", e);
             }
@@ -245,7 +269,7 @@ export default function Home() {
             item.rate?.toFixed(2) || '-',
             item.amount?.toFixed(2) || '-'
         ];
-    }));
+    });
 
     doc.autoTable({
       startY: 80,
