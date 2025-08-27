@@ -16,7 +16,6 @@ import 'jspdf-autotable';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog';
-import { alshayaLogoDataUri } from '@/lib/logo';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -204,10 +203,9 @@ export default function Home() {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     
     // Add Header
-    doc.addImage(alshayaLogoDataUri, 'PNG', 14, 15, 30, 10);
     doc.setFontSize(20);
     doc.setFont(undefined, 'bold');
-    doc.text('Alshaya Enterprise™', 14, 32);
+    doc.text('Alshaya Enterprise™', 14, 20);
     doc.setFont(undefined, 'normal');
 
 
@@ -340,8 +338,7 @@ export default function Home() {
       <div className="w-full max-w-4xl">
         <Card className="w-full">
           <CardHeader className="items-center text-center">
-            <img src={alshayaLogoDataUri} alt="Alshaya Enterprise Logo" width={80} height={40} />
-            <h1 className="text-3xl font-bold">Alshaya Enterprise</h1>
+            <h1 className="text-3xl font-bold">Alshaya Enterprise™</h1>
             <CardTitle className="text-2xl font-bold tracking-tight">
               Estimation Pro
             </CardTitle>
