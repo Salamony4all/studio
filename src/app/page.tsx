@@ -156,7 +156,7 @@ export default function Home() {
         return cellStr;
     };
 
-    const headers = ['Sn', 'Item', 'Description', 'Quantity', 'Unit', 'New Rate', 'New Amount'];
+    const headers = ['Sn', 'Item', 'Description', 'Quantity', 'Unit', 'Rate', 'Amount'];
     const rows = finalBoqItems.map((item, index) => [
         index + 1,
         item.itemCode,
@@ -219,7 +219,7 @@ export default function Home() {
     doc.text(`Contact Number: ${contactNumber}`, 14, 73);
 
     // Add Table
-    const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "New Rate", "New Amount"];
+    const tableColumn = ["Sn", "Image", "Item", "Description", "Quantity", "Unit", "Rate", "Amount"];
     
     const tableRows = await Promise.all(finalBoqItems.map(async (item, index) => {
         let imageCell: any = 'No image';
@@ -542,7 +542,7 @@ export default function Home() {
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end">
-                        <Button onClick={() => setShowFinalBoq(true)}>Generate New BOQ</Button>
+                        <Button onClick={() => setShowFinalBoq(true)}>Generate BOQ</Button>
                     </CardFooter>
                 </Card>
             )}
@@ -564,8 +564,8 @@ export default function Home() {
                                   <TableHead>Description</TableHead>
                                   <TableHead className="text-right">Quantity</TableHead>
                                   <TableHead>Unit</TableHead>
-                                  <TableHead className="text-right">New Rate</TableHead>
-                                  <TableHead className="text-right">New Amount</TableHead>
+                                  <TableHead className="text-right">Rate</TableHead>
+                                  <TableHead className="text-right">Amount</TableHead>
                               </TableRow>
                           </TableHeader>
                           <TableBody>
