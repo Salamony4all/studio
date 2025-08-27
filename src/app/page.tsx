@@ -352,6 +352,7 @@ export default function Home() {
         <Card className="w-full">
           <CardHeader className="items-center text-center">
             <Image src={alshayaLogoDataUri} alt="Alshaya Enterprise Logo" width={80} height={40} />
+            <h1 className="text-3xl font-bold">Alshaya Enterprise™</h1>
             <CardTitle className="text-2xl font-bold tracking-tight">
               Estimation Pro
             </CardTitle>
