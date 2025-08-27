@@ -38,7 +38,7 @@ export default function Home() {
   const [installation, setInstallation] = useState(0);
   
   const [projectName, setProjectName] = useState('');
-  const [inchargePerson, setInchargePerson] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
 
@@ -197,7 +197,7 @@ export default function Home() {
 
     // Project Details
     csvContent += `Project Name,${escapeCsvCell(projectName)}\n`;
-    csvContent += `Incharge Person,${escapeCsvCell(inchargePerson)}\n`;
+    csvContent += `Contact Person,${escapeCsvCell(contactPerson)}\n`;
     csvContent += `Company Name,${escapeCsvCell(companyName)}\n`;
     csvContent += `Contact Number,${escapeCsvCell(contactNumber)}\n`;
     csvContent += '\n';
@@ -240,7 +240,7 @@ export default function Home() {
     doc.text('Bill of Quantities', 14, 45);
     doc.setFontSize(12);
     doc.text(`Project Name: ${projectName}`, 14, 55);
-    doc.text(`Incharge Person: ${inchargePerson}`, 14, 61);
+    doc.text(`Contact Person: ${contactPerson}`, 14, 61);
     doc.text(`Company Name: ${companyName}`, 14, 67);
     doc.text(`Contact Number: ${contactNumber}`, 14, 73);
 
@@ -489,8 +489,8 @@ export default function Home() {
                   <Input id="project-name" value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Enter project name" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="incharge-person">Incharge Person</Label>
-                  <Input id="incharge-person" value={inchargePerson} onChange={(e) => setInchargePerson(e.target.value)} placeholder="Enter name" />
+                  <Label htmlFor="contact-person">Contact Person</Label>
+                  <Input id="contact-person" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Enter name" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company-name">Company Name</Label>
