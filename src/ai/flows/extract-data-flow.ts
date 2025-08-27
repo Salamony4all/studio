@@ -73,7 +73,7 @@ If the document contains a Bill of Quantities (BOQ), it is your single most impo
 
 **SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
 
-**IF NO BOQ IS FOUND: If the document does not appear to contain a Bill of Quantities, do not force the output. Instead, focus on extracting any other structured data you can find, such as general tables or lists, into the appropriate fields in the output schema. If no structured data is found at all, return an empty object.**
+**IF NO BOQ IS FOUND: If the document does not appear to contain a Bill of Quantities, do not force the output. Instead, focus on extracting any other structured data you can find, such as general tables or lists, into the appropriate fields in the output schema. If no structured data is found at all, return an empty object for the 'boqs' field.**
 
 **FINAL VERIFICATION PROTOCOL: Before you output the final data, if you have extracted a BOQ, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
@@ -90,7 +90,7 @@ const extractDataFlow = ai.defineFlow(
     const { output } = await extractDataPrompt(input);
     
     if (!output) {
-      throw new Error("Failed to extract data from the document.");
+      throw new Error("Failed to extract data from the document. The AI model returned an empty response.");
     }
 
     // Ensure all BOQ items have a rate and amount, defaulting to 0 if not present.
