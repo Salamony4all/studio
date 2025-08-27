@@ -45,6 +45,7 @@ export default function Home() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
+  const projectDetailsComplete = !!projectName && !!inchargePerson && !!companyName && !!contactNumber;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -609,14 +610,14 @@ export default function Home() {
                         <CardDescription>Download the final Bill of Quantities.</CardDescription>
                     </CardHeader>
                     <CardContent className='flex gap-4'>
-                        <Button onClick={handleExportCsv} disabled={!projectName || !inchargePerson || !companyName || !contactNumber}>
+                        <Button onClick={handleExportCsv} disabled={!projectDetailsComplete}>
                             <Download className="mr-2 h-4 w-4" />
                             Export as CSV
                         </Button>
                         <Button 
                             onClick={handleExportPdf} 
                             variant="outline" 
-                            disabled={!projectName || !inchargePerson || !companyName || !contactNumber || isPdfGenerating}
+                            disabled={!projectDetailsComplete || isPdfGenerating}
                         >
                             {isPdfGenerating ? (
                                 <>
