@@ -61,7 +61,7 @@ export async function extractDataFromFile(input: ExtractDataInput): Promise<Extr
 
 const extractDataPrompt = ai.definePrompt({
   name: 'extractDataPrompt',
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
   prompt: `You are an expert data extraction agent. Your single most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ).
