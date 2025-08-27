@@ -250,13 +250,9 @@ export default function Home() {
     const tableRows = finalBoqItems.map((item, index) => {
         let imageCell: any = 'No image';
         if (item.imageUrl) {
-            try {
-                let imageDataUri = item.imageUrl.startsWith('http') ? imageUris[item.imageUrl] : item.imageUrl;
-                if(imageDataUri) {
-                    imageCell = { image: imageDataUri, width: 20 };
-                }
-            } catch (e) {
-                console.error("Could not load image for PDF", e);
+            let imageDataUri = item.imageUrl.startsWith('http') ? imageUris[item.imageUrl] : item.imageUrl;
+            if(imageDataUri) {
+                imageCell = { image: imageDataUri, width: 20 };
             }
         }
         return [
@@ -288,7 +284,7 @@ export default function Home() {
             img.src = data.cell.raw.image;
             img.onload = () => {
               const aspectRatio = img.width / img.height;
-              const imageHeight = (data.cell.width - 4) / aspectRatio;
+              let imageHeight = (data.cell.width - 4) / aspectRatio;
               if (data.row.height < imageHeight) {
                 data.row.height = imageHeight + 4;
               }
@@ -297,34 +293,42 @@ export default function Home() {
       },
       didDrawCell: (data) => {
           if (data.column.index === 1 && typeof data.cell.raw === 'object' && data.cell.raw?.image) {
-              try {
-                  const img = new window.Image();
-                  img.src = data.cell.raw.image;
-                  
-                  const cellWidth = data.cell.width - 4;
-                  const cellHeight = data.cell.height - 4;
-                  
-                  const aspect = img.width / img.height;
-                  let imgWidth = cellWidth;
-                  let imgHeight = imgWidth / aspect;
+              const img = new window.Image();
+              img.src = data.cell.raw.image;
+              img.onload = () => {
+                try {
+                    const cellWidth = data.cell.width - 4;
+                    const cellHeight = data.cell.height - 4;
+                    
+                    const aspect = img.width / img.height;
+                    let imgWidth = cellWidth;
+                    let imgHeight = imgWidth / aspect;
 
-                  if (imgHeight > cellHeight) {
-                      imgHeight = cellHeight;
-                      imgWidth = imgHeight * aspect;
-                  }
+                    if (imgHeight > cellHeight) {
+                        imgHeight = cellHeight;
+                        imgWidth = imgHeight * aspect;
+                    }
 
-                  const x = data.cell.x + (data.cell.width - imgWidth) / 2;
-                  const y = data.cell.y + (data.cell.height - imgHeight) / 2;
-                  
-                  const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
-                  doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
-              
-              } catch(e) {
-                  console.error("Failed to add image to PDF:", e);
-                  const x = data.cell.x + 2;
-                  const y = data.cell.y + 2;
-                  doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
-                  doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
+                    const x = data.cell.x + (data.cell.width - imgWidth) / 2;
+                    const y = data.cell.y + (data.cell.height - imgHeight) / 2;
+                    
+                    const imgFormat = data.cell.raw.image.substring(data.cell.raw.image.indexOf('/') + 1, data.cell.raw.image.indexOf(';'));
+                    doc.addImage(data.cell.raw.image, imgFormat.toUpperCase(), x, y, imgWidth, imgHeight);
+                
+                } catch(e) {
+                    console.error("Failed to add image to PDF:", e);
+                    const x = data.cell.x + 2;
+                    const y = data.cell.y + 2;
+                    doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
+                    doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
+                }
+              };
+              img.onerror = () => {
+                console.error("Failed to load image for PDF");
+                const x = data.cell.x + 2;
+                const y = data.cell.y + 2;
+                doc.rect(x, y, data.cell.width - 4, data.cell.height - 4);
+                doc.text("X", x + (data.cell.width - 4) / 2, y + (data.cell.height - 4) / 2, { align: 'center', baseline: 'middle' });
               }
           }
       },
@@ -346,20 +350,6 @@ export default function Home() {
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
-    const footerLines = [
-        "Regards",
-        "Mohamed Abdelsalam",
-        "Sr.Sales Consultant",
-        "Oman 70 Building , Al-Ghubra, ",
-        "P.O Box 135 , Postal Code 103, Muscat, Oman.",
-        "Alshaya Enterprises®",
-        "",
-        "Phone: (+968) : (+968) 24501943 Ext. 6004",
-        "Mobile: (+968) 98901384 - 93319809",
-        "www.alshayaenterprises.com",
-        "www.facebook.com/AlshayaEnterprises/ | www.instagram.com/alshayaenterprises/",
-    ];
-
     doc.setFont(undefined, 'bold');
     doc.text("Regards", 14, finalY);
     finalY += 5;
