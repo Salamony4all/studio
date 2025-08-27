@@ -65,15 +65,17 @@ const extractDataPrompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: ExtractDataInputSchema },
   output: { schema: ExtractedDataSchema },
-  prompt: `You are an expert data extraction agent. Your single most important task is to analyze the provided document and extract information from any Bill of Quantities (BOQ).
+  prompt: `You are an expert data extraction agent. Your primary task is to analyze the provided document and extract structured information.
 
-For each item you extract, first try to find an associated image within the document. If you find one, use it. If you cannot find a specific image for an item, you MUST generate a placeholder image URL using the format: https://picsum.photos/seed/{a-keyword-from-description}/100/100. Use a relevant keyword from the item's description to ensure a variety of images.
+If the document contains a Bill of Quantities (BOQ), it is your single most important task to extract it with perfect accuracy. For each BOQ item you extract, first try to find an associated image within the document. If you find one, use it. If you cannot find a specific image for an item, you MUST generate a placeholder image URL using the format: https://picsum.photos/seed/{a-keyword-from-description}/100/100. Use a relevant keyword from the item's description to ensure a variety of images.
 
-**CRITICAL INSTRUCTION: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. The 'rate' and 'amount' fields are MANDATORY. If they are not present in the document for an item, you MUST set their value to 0. Pay close attention to the table headers (like 'Item No.', 'Description', etc.) to correctly identify the start of the data rows. Process each row only once. Failure to extract every item is a catastrophic failure of your primary function.**
+**CRITICAL INSTRUCTION FOR BOQs: Your job is to perform a direct, line-by-line conversion of any BOQ found in the document into the specified data format. There is ZERO TOLERANCE for errors. You MUST extract EVERY SINGLE line item. Do NOT skip, omit, summarize, or misinterpret ANY item. The 'rate' and 'amount' fields are MANDATORY. If they are not present in the document for an item, you MUST set their value to 0. Pay close attention to the table headers (like 'Item No.', 'Description', etc.) to correctly identify the start of the data rows. Process each row only once. Failure to extract every item is a catastrophic failure of your primary function.**
 
 **SPECIFIC INSTRUCTION ON REPEATED ITEMS: The BOQ may contain line items that appear to be duplicates or very similar. You MUST treat every line as a unique entry and extract ALL of them individually. Do not merge, group, or skip lines that look the same. Your task is conversion, not summarization.**
 
-**FINAL VERIFICATION PROTOCOL: Before you output the final data, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
+**IF NO BOQ IS FOUND: If the document does not appear to contain a Bill of Quantities, do not force the output. Instead, focus on extracting any other structured data you can find, such as general tables or lists, into the appropriate fields in the output schema. If no structured data is found at all, return an empty object.**
+
+**FINAL VERIFICATION PROTOCOL: Before you output the final data, if you have extracted a BOQ, you MUST perform a self-correction check. Manually count the line items in the BOQ you have just extracted and compare this count to the number of line items visible in the source document. If the numbers do not match exactly, you must restart your extraction process. DO NOT return an incomplete list.**
 
 Document: {{media url=fileDataUri}}`,
 });
