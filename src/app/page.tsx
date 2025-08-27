@@ -156,8 +156,9 @@ export default function Home() {
         return cellStr;
     };
 
-    const headers = ['Item', 'Description', 'Quantity', 'Unit', 'New Rate', 'New Amount'];
-    const rows = finalBoqItems.map(item => [
+    const headers = ['Sn', 'Item', 'Description', 'Quantity', 'Unit', 'New Rate', 'New Amount'];
+    const rows = finalBoqItems.map((item, index) => [
+        index + 1,
         item.itemCode,
         item.description,
         item.quantity,
@@ -183,9 +184,9 @@ export default function Home() {
 
     // Totals
     csvContent += '\n';
-    csvContent += `,,,,Subtotal,${finalSubtotal.toFixed(2)}\n`;
-    csvContent += `,,,,VAT (${vatRate * 100}%),${vatAmount.toFixed(2)}\n`;
-    csvContent += `,,,,Grand Total,${grandTotal.toFixed(2)}\n`;
+    csvContent += `,,,,,Subtotal,${finalSubtotal.toFixed(2)}\n`;
+    csvContent += `,,,,,VAT (${vatRate * 100}%),${vatAmount.toFixed(2)}\n`;
+    csvContent += `,,,,,Grand Total,${grandTotal.toFixed(2)}\n`;
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -461,6 +462,7 @@ export default function Home() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Sn</TableHead>
                                 <TableHead>Image</TableHead>
                                 <TableHead>Item</TableHead>
                                 <TableHead>Description</TableHead>
@@ -473,6 +475,7 @@ export default function Home() {
                         <TableBody>
                             {allBoqItems.map((item, itemIndex) => (
                                 <TableRow key={`boq-item-${itemIndex}`}>
+                                    <TableCell>{itemIndex + 1}</TableCell>
                                     <TableCell>
                                         {item.imageUrl ? (
                                             <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md object-cover" />
@@ -555,6 +558,7 @@ export default function Home() {
                       <Table>
                           <TableHeader>
                               <TableRow>
+                                  <TableHead>Sn</TableHead>
                                   <TableHead>Image</TableHead>
                                   <TableHead>Item</TableHead>
                                   <TableHead>Description</TableHead>
@@ -567,6 +571,7 @@ export default function Home() {
                           <TableBody>
                               {finalBoqItems.map((item, itemIndex) => (
                                   <TableRow key={`final-boq-item-${itemIndex}`}>
+                                      <TableCell>{itemIndex + 1}</TableCell>
                                       <TableCell>
                                           {item.imageUrl ? (
                                               <Image src={item.imageUrl} alt={item.description} width={40} height={40} className="rounded-md object-cover" />
@@ -667,5 +672,4 @@ export default function Home() {
       </Dialog>
     </div>
   );
-
-    
+}
