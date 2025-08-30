@@ -17,8 +17,3 @@ export async function getImageAsDataUri(url: string): Promise<string> {
     const base64 = Buffer.from(buffer).toString('base64');
     return `data:${blob.type};base64,${base64}`;
   } catch (error) {
-    console.error('Error fetching image as data URI:', error);
-    // Return a transparent 1x1 pixel gif as a fallback
-    return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  }
-}
